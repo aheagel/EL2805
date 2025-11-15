@@ -37,10 +37,10 @@ class Maze:
     }
 
     # Reward values 
-    STEP_REWARD =           #TODO
-    GOAL_REWARD =           #TODO
-    IMPOSSIBLE_REWARD =     #TODO
-    MINOTAUR_REWARD =       #TODO
+    STEP_REWARD = 0          #TODO
+    GOAL_REWARD = 1          #TODO
+    IMPOSSIBLE_REWARD = 0    #TODO
+    MINOTAUR_REWARD = 0      #TODO
 
     def __init__(self, maze):
         """ Constructor of the environment Maze.
@@ -100,7 +100,8 @@ class Maze:
             col_player = self.states[state][0][1] + self.actions[action][1] # Column of the player's next position 
             
             # Is the player getting out of the limits of the maze or hitting a wall?
-            impossible_action_player =      #TODO
+            
+            impossible_action_player = ((row_player, col_player), (0, 0)) not in self.map #TODO
             
         
             actions_minotaur = [[0, -1], [0, 1], [-1, 0], [1, 0]] # Possible moves for the Minotaur
@@ -122,10 +123,10 @@ class Maze:
                 states = []
                 for i in range(len(rows_minotaur)):
                     
-                    if          :                          # TODO: We met the minotaur
+                    if (self.states[state][0][0], self.states[state][0][1]) == (rows_minotaur[i], cols_minotaur[i]): #TODO
                         states.append('Eaten')
                     
-                    elif        :                           # TODO: We are at the exit state, without meeting the minotaur
+                    elif self.maze[self.states[state][0][0], self.states[state][0][1]] == 2: #TODO
                         states.append('Win')
                 
                     else:     # The player remains in place, the minotaur moves randomly
@@ -137,10 +138,10 @@ class Maze:
                 states = []
                 for i in range(len(rows_minotaur)):
                 
-                    if          :                          # TODO: We met the minotaur
+                    if (row_player, col_player) == (rows_minotaur[i], cols_minotaur[i]): #TODO
                         states.append('Eaten')
                     
-                    elif        :                          # TODO:We are at the exit state, without meeting the minotaur
+                    elif self.maze[row_player, col_player] == 2: #TODO
                         states.append('Win')
                     
                     else: # The player moves, the minotaur moves randomly
@@ -161,8 +162,21 @@ class Maze:
         transition_probabilities = np.zeros(dimensions)
 
         # TODO: Compute the transition probabilities.
-  
-        
+        # Loop through all states
+        for s in range(self.n_states):
+            # Loop through all actions
+            for a in range(self.n_actions):
+                # Get all possible next states from this (s, a) pair
+                next_states = self.__move(s, a)
+                prob = 1 / len(next_states) # As the minotaur moves randomly
+                
+                # For each possible next state
+                for next_state in next_states:
+                    # Convert next_state to state index
+                    next_s = self.map[next_state]
+                    
+                    # Set the transition probability
+                    transition_probabilities[s, next_s, a] = prob    
   
     
     
@@ -217,7 +231,7 @@ class Maze:
             while t < horizon - 1:
                 a = policy[s, t] # Move to next state given the policy and the current state
                 next_states = self.__move(s, a) 
-                next_s = 
+                next_s = max(next_states, key=lambda x: self.map[x]) #TODO Choose one of the possible next states (deterministic policy)
                 path.append(next_s) # Add the next state to the path
                 t +=1 # Update time and state for next iteration
                 s = self.map[next_s]
@@ -227,15 +241,15 @@ class Maze:
             s = self.map[start]
             path.append(start) # Add the starting position in the maze to the path
             next_states = self.__move(s, policy[s]) # Move to next state given the policy and the current state
-            next_s = 
+            next_s = max(next_states, key=lambda x: self.map[x]) #TODO Choose one of the possible next states (deterministic policy)
             path.append(next_s) # Add the next state to the path
             
-            horizon =                               # Question e
+            horizon =  1                             #TODO Question e
             # Loop while state is not the goal state
             while s != next_s and t <= horizon:
                 s = self.map[next_s] # Update state
                 next_states = self.__move(s, policy[s]) # Move to next state given the policy and the current state
-                next_s = 
+                next_s = 1 #TODO
                 path.append(next_s) # Add the next state to the path
                 t += 1 # Update time for next iteration
         
@@ -265,10 +279,50 @@ def dynamic_programming(env, horizon):
         :return numpy.array policy: Optimal time-varying policy at every state,
                                     dimension S*T
     """
-    #TODO
+    V = np.zeros((env.n_states, horizon))
+    policy = np.zeros((env.n_states, horizon))
 
+    # Initialize value function at terminal time (horizon - 1)
+    # At the last time step, we get immediate rewards
+    for s in range(env.n_states):
+        best_value = float('-inf')
+        best_action = 0
+        
+        for a in range(env.n_actions):
+            # At terminal time, expected value is just the immediate reward
+            # Since reward is deterministic for a given (s,a), we just use it directly
+            expected_value = env.rewards[s, a]
+            
+            if expected_value > best_value:
+                best_value = expected_value
+                best_action = a
+        
+        V[s, horizon - 1] = best_value
+        policy[s, horizon - 1] = best_action
 
-
+    # Backward induction - iterate from horizon-2 down to 0
+    for t in range(horizon - 2, -1, -1):
+        for s in range(env.n_states):
+            # Initialize with first action
+            best_value = float('-inf')
+            best_action = 0
+            
+            # Try all actions
+            for a in range(env.n_actions):
+                # Calculate expected value for this action
+                expected_value = 0
+                for next_s in range(env.n_states):
+                    # Bellman equation: R(s,a) + sum_s' P(s'|s,a) * V(s', t+1)
+                    expected_value += env.transition_probabilities[s, next_s, a] * \
+                                    (env.rewards[s, a] + V[next_s, t + 1])
+                
+                # Keep track of best action
+                if expected_value > best_value:
+                    best_value = expected_value
+                    best_action = a
+            
+            V[s, t] = best_value
+            policy[s, t] = best_action
 
     return V, policy
 
@@ -350,7 +404,7 @@ if __name__ == "__main__":
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
     
     env = Maze(maze) # Create an environment maze
-    horizon =        # TODO: Finite horizon
+    horizon = max(maze.shape[0]+maze.shape[1], 20)       # TODO: Finite horizon this is the Time we have to reach the exit
 
     # Solve the MDP problem with dynamic programming
     V, policy = dynamic_programming(env, horizon)  
