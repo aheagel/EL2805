@@ -230,8 +230,8 @@ class Maze:
             
             while t < horizon - 1:
                 a = policy[s, t] # Move to next state given the policy and the current state
-                next_states = self.__move(s, a) 
-                next_s = max(next_states, key=lambda x: self.map[x]) #TODO Choose one of the possible next states (deterministic policy)
+                next_states = self.__move(s, a)
+                next_s = random.choice(next_states) #TODO Choose one of the possible next states (deterministic policy)
                 path.append(next_s) # Add the next state to the path
                 t +=1 # Update time and state for next iteration
                 s = self.map[next_s]
@@ -347,15 +347,13 @@ def value_iteration(env, gamma, epsilon):
 
 
 def animate_solution(maze, path):
-
+    """ Animates the solution path in the maze """
+    
     # Map a color to each cell in the maze
     col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE}
     
-    rows, cols = maze.shape # Size of the maze
-    fig = plt.figure(1, figsize=(cols, rows)) # Create figure of the size of the maze
-
-    # Remove the axis ticks and add title
-    ax = plt.gca()
+    rows, cols = maze.shape
+    fig, ax = plt.subplots(figsize=(cols, rows))
     ax.set_title('Policy simulation')
     ax.set_xticks([])
     ax.set_yticks([])
@@ -365,11 +363,11 @@ def animate_solution(maze, path):
 
     # Create a table to color
     grid = plt.table(
-        cellText = None, 
-        cellColours = colored_maze, 
-        cellLoc = 'center', 
-        loc = (0,0), 
-        edges = 'closed'
+        cellText=None, 
+        cellColours=colored_maze, 
+        cellLoc='center', 
+        loc=(0, 0), 
+        edges='closed'
     )
     
     # Modify the height and width of the cells in the table
@@ -378,16 +376,34 @@ def animate_solution(maze, path):
         cell.set_height(1.0/rows)
         cell.set_width(1.0/cols)
 
-    for i in range(0, len(path)):
-        if path[i-1] != 'Eaten' and path[i-1] != 'Win':
-            grid.get_celld()[(path[i-1][0])].set_facecolor(col_map[maze[path[i-1][0]]])
-            grid.get_celld()[(path[i-1][1])].set_facecolor(col_map[maze[path[i-1][1]]])
+    def update(frame):
+        """ Update function for animation """
+        i = frame
+        
+        # Reset previous positions to original colors
+        if i > 0 and path[i-1] != 'Eaten' and path[i-1] != 'Win':
+            player_prev = path[i-1][0]
+            minotaur_prev = path[i-1][1]
+            grid.get_celld()[(player_prev[0], player_prev[1])].set_facecolor(col_map[maze[player_prev]])
+            grid.get_celld()[(minotaur_prev[0], minotaur_prev[1])].set_facecolor(col_map[maze[minotaur_prev]])
+        
+        # Color current positions
         if path[i] != 'Eaten' and path[i] != 'Win':
-            grid.get_celld()[(path[i][0])].set_facecolor(col_map[-2]) # Position of the player
-            grid.get_celld()[(path[i][1])].set_facecolor(col_map[-1]) # Position of the minotaur
-        display.display(fig)
-        time.sleep(0.1)
-        display.clear_output(wait = True)
+            player_pos = path[i][0]
+            minotaur_pos = path[i][1]
+            grid.get_celld()[(player_pos[0], player_pos[1])].set_facecolor(col_map[-2])  # Player
+            grid.get_celld()[(minotaur_pos[0], minotaur_pos[1])].set_facecolor(col_map[-1])  # Minotaur
+            ax.set_title(f'Policy simulation - Step {i+1}/{len(path)}')
+        else:
+            ax.set_title(f'Policy simulation - {path[i]}!')
+        
+        return grid,
+
+    from matplotlib.animation import FuncAnimation
+    anim = FuncAnimation(fig, update, frames=len(path), interval=300, repeat=False, blit=False)
+    
+    plt.show()
+    return anim
 
 
 
