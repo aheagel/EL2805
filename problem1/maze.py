@@ -161,25 +161,17 @@ class Maze:
         dimensions = (self.n_states,self.n_states,self.n_actions)
         transition_probabilities = np.zeros(dimensions)
 
-        # TODO: Compute the transition probabilities.
-        # Loop through all states
+        # Vectorized computation of transition probabilities
+        # Pre-compute all next states for all (state, action) pairs
         for s in range(self.n_states):
-            # Loop through all actions
             for a in range(self.n_actions):
-                # Get all possible next states from this (s, a) pair
                 next_states = self.__move(s, a)
-                prob = 1 / len(next_states) # As the minotaur moves randomly
+                prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
                 
-                # For each possible next state
-                for next_state in next_states:
-                    # Convert next_state to state index
-                    next_s = self.map[next_state]
-                    
-                    # Set the transition probability
-                    transition_probabilities[s, next_s, a] = prob    
+                # Vectorized assignment: convert all next_states to indices at once
+                next_indices = np.array([self.map[next_state] for next_state in next_states])
+                transition_probabilities[s, next_indices, a] += prob
   
-    
-    
         return transition_probabilities
 
 
@@ -280,49 +272,26 @@ def dynamic_programming(env, horizon):
                                     dimension S*T
     """
     V = np.zeros((env.n_states, horizon))
-    policy = np.zeros((env.n_states, horizon))
+    policy = np.zeros((env.n_states, horizon), dtype=int)
 
-    # Initialize value function at terminal time (horizon - 1)
-    # At the last time step, we get immediate rewards
-    for s in range(env.n_states):
-        best_value = float('-inf')
-        best_action = 0
-        
-        for a in range(env.n_actions):
-            # At terminal time, expected value is just the immediate reward
-            # Since reward is deterministic for a given (s,a), we just use it directly
-            expected_value = env.rewards[s, a]
-            
-            if expected_value > best_value:
-                best_value = expected_value
-                best_action = a
-        
-        V[s, horizon - 1] = best_value
-        policy[s, horizon - 1] = best_action
+    eaten = env.map['Eaten']
+    win = env.map['Win']
+    
+    # Boundary conditions: terminal states give absorbing value
+    V[win, :] = 1.0      # Reaching Win = success probability 1
+    V[eaten, :] = 0.0    # Being eaten = success probability 0
 
-    # Backward induction - iterate from horizon-2 down to 0
     for t in range(horizon - 2, -1, -1):
-        for s in range(env.n_states):
-            # Initialize with first action
-            best_value = float('-inf')
-            best_action = 0
-            
-            # Try all actions
-            for a in range(env.n_actions):
-                # Calculate expected value for this action
-                expected_value = 0
-                for next_s in range(env.n_states):
-                    # Bellman equation: R(s,a) + sum_s' P(s'|s,a) * V(s', t+1)
-                    expected_value += env.transition_probabilities[s, next_s, a] * \
-                                    (env.rewards[s, a] + V[next_s, t + 1])
-                
-                # Keep track of best action
-                if expected_value > best_value:
-                    best_value = expected_value
-                    best_action = a
-            
-            V[s, t] = best_value
-            policy[s, t] = best_action
+        future_values = np.einsum('ijk,j->ik', env.transition_probabilities, V[:, t + 1])
+        expected_values = env.rewards + future_values
+        V[:, t] = np.max(expected_values, axis=1)
+        policy[:, t] = np.argmax(expected_values, axis=1)
+        
+        # Re-enforce terminal absorbing states after each iteration
+        V[win, t] = 1.0
+        V[eaten, t] = 0.0
+        policy[win, t] = env.STAY
+        policy[eaten, t] = env.STAY
 
     return V, policy
 
@@ -376,10 +345,17 @@ def animate_solution(maze, path):
         cell.set_height(1.0/rows)
         cell.set_width(1.0/cols)
 
+    # Find terminal state index
+    terminal_idx = len(path)
+    for i, state in enumerate(path):
+        if state == 'Eaten' or state == 'Win':
+            terminal_idx = i + 1
+            break
+
     def update(frame):
         """ Update function for animation """
         i = frame
-        
+
         # Reset previous positions to original colors
         if i > 0 and path[i-1] != 'Eaten' and path[i-1] != 'Win':
             player_prev = path[i-1][0]
@@ -395,12 +371,12 @@ def animate_solution(maze, path):
             grid.get_celld()[(minotaur_pos[0], minotaur_pos[1])].set_facecolor(col_map[-1])  # Minotaur
             ax.set_title(f'Policy simulation - Step {i+1}/{len(path)}')
         else:
-            ax.set_title(f'Policy simulation - {path[i]}!')
-        
+            ax.set_title(f'Policy simulation - Step {i+1} - {path[i]}!')
+
         return grid,
 
     from matplotlib.animation import FuncAnimation
-    anim = FuncAnimation(fig, update, frames=len(path), interval=300, repeat=False, blit=False)
+    anim = FuncAnimation(fig, update, frames=terminal_idx, interval=300, repeat=False, blit=False)
     
     plt.show()
     return anim
@@ -420,7 +396,7 @@ if __name__ == "__main__":
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
     
     env = Maze(maze) # Create an environment maze
-    horizon = max(maze.shape[0]+maze.shape[1], 20)       # TODO: Finite horizon this is the Time we have to reach the exit
+    horizon = 20      # TODO: Finite horizon this is the Time we have to reach the exit
 
     # Solve the MDP problem with dynamic programming
     V, policy = dynamic_programming(env, horizon)  
