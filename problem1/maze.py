@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import time
 from IPython import display
 import random
+import os
 
 # Implemented methods
 methods = ['DynProg', 'ValIter']
@@ -25,7 +26,7 @@ class Maze:
     MOVE_LEFT  = 1
     MOVE_RIGHT = 2
     MOVE_UP    = 3
-    MOVE_DOWN  = 4
+    MOVE_DOWN  = 3
 
     # Give names to actions
     actions_names = {
@@ -42,7 +43,7 @@ class Maze:
     IMPOSSIBLE_REWARD = 0    #TODO
     MINOTAUR_REWARD = 0      #TODO
 
-    def __init__(self, maze):
+    def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
         """
         self.maze                     = maze
@@ -52,6 +53,7 @@ class Maze:
         self.n_states                 = len(self.states)
         self.transition_probabilities = self.__transitions()
         self.rewards                  = self.__rewards()
+        self.still_minotaur           = still_minotaur
 
     def __actions(self):
         actions = dict()
@@ -59,7 +61,7 @@ class Maze:
         actions[self.MOVE_LEFT]  = (0,-1)
         actions[self.MOVE_RIGHT] = (0, 1)
         actions[self.MOVE_UP]    = (-1,0)
-        actions[self.MOVE_DOWN]  = (1,0)
+        actions[self.MOVE_DOWN]  = (1, 0)
         return actions
 
     def __states(self):
@@ -105,6 +107,9 @@ class Maze:
             
         
             actions_minotaur = [[0, -1], [0, 1], [-1, 0], [1, 0]] # Possible moves for the Minotaur
+            if self.still_minotaur:
+                actions_minotaur.append([0,0])
+                
             rows_minotaur, cols_minotaur = [], []
             for i in range(len(actions_minotaur)):
                 # Is the minotaur getting out of the limits of the maze?
@@ -167,11 +172,9 @@ class Maze:
             for a in range(self.n_actions):
                 next_states = self.__move(s, a)
                 prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
-                
-                # Vectorized assignment: convert all next_states to indices at once
-                next_indices = np.array([self.map[next_state] for next_state in next_states])
-                transition_probabilities[s, next_indices, a] += prob
-  
+                for next_state in next_states:
+                    transition_probabilities[s, self.map[next_state], a] += prob
+
         return transition_probabilities
 
 
@@ -193,7 +196,7 @@ class Maze:
                 
                 else:                
                     next_states = self.__move(s,a)
-                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the first one
+                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
                     
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
                         rewards[s, a] = self.IMPOSSIBLE_REWARD
@@ -223,9 +226,11 @@ class Maze:
             while t < horizon - 1:
                 a = policy[s, t] # Move to next state given the policy and the current state
                 next_states = self.__move(s, a)
-                next_s = random.choice(next_states) #TODO Choose one of the possible next states (deterministic policy)
+                next_indices = [self.map[next_state] for next_state in next_states]
+                probs = self.transition_probabilities[s, next_indices, a]
+                next_s = next_states[np.random.choice(len(next_states), p=probs/sum(probs))] #TODO Choose one of the possible next states (deterministic policy)
                 path.append(next_s) # Add the next state to the path
-                t +=1 # Update time and state for next iteration
+                t += 1 # Update time and state for next iteration
                 s = self.map[next_s]
                 
         if method == 'ValIter': 
@@ -273,25 +278,22 @@ def dynamic_programming(env, horizon):
     """
     V = np.zeros((env.n_states, horizon))
     policy = np.zeros((env.n_states, horizon), dtype=int)
-
-    eaten = env.map['Eaten']
-    win = env.map['Win']
     
     # Boundary conditions: terminal states give absorbing value
-    V[win, :] = 1.0      # Reaching Win = success probability 1
-    V[eaten, :] = 0.0    # Being eaten = success probability 0
+    V[:, horizon - 1] = np.max(env.rewards, axis=1)    # Bellman function at boundary 
 
     for t in range(horizon - 2, -1, -1):
-        future_values = np.einsum('ijk,j->ik', env.transition_probabilities, V[:, t + 1])
-        expected_values = env.rewards + future_values
-        V[:, t] = np.max(expected_values, axis=1)
-        policy[:, t] = np.argmax(expected_values, axis=1)
-        
-        # Re-enforce terminal absorbing states after each iteration
-        V[win, t] = 1.0
-        V[eaten, t] = 0.0
-        policy[win, t] = env.STAY
-        policy[eaten, t] = env.STAY
+        # Compute expected future value functions and Q-function and the terminal states
+        not_terminal = np.ones((env.n_states, env.n_states, env.n_actions))
+        not_terminal[env.map['Eaten'], :, :] = 0
+        not_terminal[env.map['Win'], :, :] = 0
+
+        future_values = np.einsum('ijk,j->ik', env.transition_probabilities*not_terminal, V[:, t + 1])
+        Q_function = env.rewards + future_values 
+
+        # Compute the optimal value and policy
+        V[:, t] = np.max(Q_function, axis=1)
+        policy[:, t] = np.argmax(Q_function, axis=1)
 
     return V, policy
 
@@ -315,14 +317,16 @@ def value_iteration(env, gamma, epsilon):
 
 
 
-def animate_solution(maze, path):
-    """ Animates the solution path in the maze """
-    
+def animate_solution(maze, path, save_frames=False, frames_dir='problem1/frames'):
+
     # Map a color to each cell in the maze
     col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE}
     
-    rows, cols = maze.shape
-    fig, ax = plt.subplots(figsize=(cols, rows))
+    rows, cols = maze.shape # Size of the maze
+    fig = plt.figure(1, figsize=(cols, rows)) # Create figure of the size of the maze
+
+    # Remove the axis ticks and add title
+    ax = plt.gca()
     ax.set_title('Policy simulation')
     ax.set_xticks([])
     ax.set_yticks([])
@@ -332,11 +336,11 @@ def animate_solution(maze, path):
 
     # Create a table to color
     grid = plt.table(
-        cellText=None, 
-        cellColours=colored_maze, 
-        cellLoc='center', 
-        loc=(0, 0), 
-        edges='closed'
+        cellText = None, 
+        cellColours = colored_maze, 
+        cellLoc = 'center', 
+        loc = (0,0), 
+        edges = 'closed'
     )
     
     # Modify the height and width of the cells in the table
@@ -345,41 +349,26 @@ def animate_solution(maze, path):
         cell.set_height(1.0/rows)
         cell.set_width(1.0/cols)
 
-    # Find terminal state index
-    terminal_idx = len(path)
-    for i, state in enumerate(path):
-        if state == 'Eaten' or state == 'Win':
-            terminal_idx = i + 1
-            break
+    # Create frames directory if saving is enabled
+    if save_frames:
+        os.makedirs(frames_dir, exist_ok=True)
 
-    def update(frame):
-        """ Update function for animation """
-        i = frame
-
-        # Reset previous positions to original colors
-        if i > 0 and path[i-1] != 'Eaten' and path[i-1] != 'Win':
-            player_prev = path[i-1][0]
-            minotaur_prev = path[i-1][1]
-            grid.get_celld()[(player_prev[0], player_prev[1])].set_facecolor(col_map[maze[player_prev]])
-            grid.get_celld()[(minotaur_prev[0], minotaur_prev[1])].set_facecolor(col_map[maze[minotaur_prev]])
-        
-        # Color current positions
+    for i in range(0, len(path)):
+        if path[i-1] != 'Eaten' and path[i-1] != 'Win':
+            grid.get_celld()[(path[i-1][0])].set_facecolor(col_map[maze[path[i-1][0]]])
+            grid.get_celld()[(path[i-1][1])].set_facecolor(col_map[maze[path[i-1][1]]])
         if path[i] != 'Eaten' and path[i] != 'Win':
-            player_pos = path[i][0]
-            minotaur_pos = path[i][1]
-            grid.get_celld()[(player_pos[0], player_pos[1])].set_facecolor(col_map[-2])  # Player
-            grid.get_celld()[(minotaur_pos[0], minotaur_pos[1])].set_facecolor(col_map[-1])  # Minotaur
-            ax.set_title(f'Policy simulation - Step {i+1}/{len(path)}')
-        else:
-            ax.set_title(f'Policy simulation - Step {i+1} - {path[i]}!')
-
-        return grid,
-
-    from matplotlib.animation import FuncAnimation
-    anim = FuncAnimation(fig, update, frames=terminal_idx, interval=300, repeat=False, blit=False)
-    
-    plt.show()
-    return anim
+            grid.get_celld()[(path[i][0])].set_facecolor(col_map[-2]) # Position of the player
+            grid.get_celld()[(path[i][1])].set_facecolor(col_map[-1]) # Position of the minotaur
+        display.display(fig)
+        
+        # Save frame if requested
+        if save_frames:
+            frame_path = os.path.join(frames_dir, f'frame_{i:03d}.png')
+            fig.savefig(frame_path, dpi=150, bbox_inches='tight')
+        
+        time.sleep(0.1)
+        display.clear_output(wait = True)
 
 
 
@@ -406,4 +395,4 @@ if __name__ == "__main__":
     start  = ((0,0), (6,5))
     path = env.simulate(start, policy, method)[0]
 
-    animate_solution(maze, path)
+    animate_solution(maze, path, save_frames=True)

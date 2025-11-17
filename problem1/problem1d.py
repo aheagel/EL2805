@@ -1,6 +1,10 @@
-from maze import Maze, animate_solution, dynamic_programming
+from maze import Maze, dynamic_programming
 import numpy as np
+import matplotlib.pyplot as plt
 
+lst=[]
+method = 'DynProg'
+start  = ((0,0), (6,5))
 maze = np.array([
     [0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 1, 0, 0],
@@ -12,20 +16,38 @@ maze = np.array([
 # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
 
 env = Maze(maze) # Create an environment maze
-horizon = 100      # TODO: Finite horizon this is the Time we have to reach the exit
 
-# Solve the MDP problem with dynamic programming
-V, policy = dynamic_programming(env, horizon)  
+for i in range(1,31):
+    # Solve the MDP problem with dynamic programming
+    V, policy = dynamic_programming(env, i)  
 
-# Simulate the shortest path starting from position A
-method = 'DynProg'
-start  = ((0,0), (6,5))
-path = env.simulate(start, policy, method)[0]
+    # Simulate the game path starting from position A
+    path = env.simulate(start, policy, method)[0]
 
-print(V[env.map[start], 0])
+    lst.append(V[env.map[start], 0])
 
-print(f"V[start, 0] = {V[env.map[start], 0]}")
-print(f"V[Win, 0] = {V[env.map['Win'], 0]}")
-print(f"V[Eaten, 0] = {V[env.map['Eaten'], 0]}")
 
-animate_solution(maze, path)
+def plot_values(values, filename=None):
+    """Plot the values list vs iteration number and optionally save to filename.
+
+    Args:
+        values (list of float): value at the start state for each iteration count
+        filename (str|None): if provided, save the figure to this path (PNG)
+    """
+    iterations = list(range(1, len(values) + 1))
+    plt.figure(figsize=(8, 5))
+    plt.scatter(iterations, values, marker='o')
+    plt.xlabel('Number of iterations')
+    plt.ylabel('Value at start state / Probability of winning')
+    plt.title('Value at start vs number of iterations (Dynamic Programming)')
+    plt.grid(True)
+    if filename:
+        plt.savefig(filename, dpi=150, bbox_inches='tight')
+        print(f'Plot saved to {filename}')
+    plt.show()
+
+
+# After computing `lst` for iterations 1..30, plot the results and save the figure.
+if __name__ == '__main__':
+    plot_values(lst)
+
