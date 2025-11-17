@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 lst=[]
+lst2=[]
 method = 'DynProg'
 start  = ((0,0), (6,5))
 maze = np.array([
@@ -15,16 +16,20 @@ maze = np.array([
     [0, 0, 0, 0, 1, 2, 0, 0]])
 # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
 
-env = Maze(maze) # Create an environment maze
+env = Maze(maze, still_minotaur=True) # Create an environment maze
+env2 = Maze(maze, still_minotaur=False)
 
 for i in range(1,31):
     # Solve the MDP problem with dynamic programming
     V, policy = dynamic_programming(env, i)  
+    V2, policy2 = dynamic_programming(env2, i)
 
     # Simulate the game path starting from position A
     path = env.simulate(start, policy, method)[0]
+    path2 = env2.simulate(start, policy2, method)[0]
 
     lst.append(V[env.map[start], 0])
+    lst2.append(V2[env2.map[start], 0])
 
 
 def plot_values(values, filename=None):
@@ -50,4 +55,5 @@ def plot_values(values, filename=None):
 # After computing `lst` for iterations 1..30, plot the results and save the figure.
 if __name__ == '__main__':
     plot_values(lst)
+    plot_values(lst2)
 
