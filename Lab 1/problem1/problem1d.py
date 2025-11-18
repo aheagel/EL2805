@@ -32,7 +32,7 @@ for i in range(1,31):
     lst2.append(V2[env2.map[start], 0])
 
 
-def plot_values(values, name, filename=None):
+def plot_values(values, name):
     """Plot the values list vs iteration number and optionally save to filename.
 
     Args:
@@ -46,9 +46,6 @@ def plot_values(values, name, filename=None):
     plt.ylabel('Value at start state / Probability of winning')
     plt.title(f'Value at start vs number of iterations (Dynamic Programming) for {name}')
     plt.grid(True)
-    if filename:
-        plt.savefig(filename, dpi=150, bbox_inches='tight')
-        print(f'Plot saved to {filename}')
     plt.show()
 
 

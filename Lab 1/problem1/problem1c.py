@@ -1,6 +1,6 @@
-from maze import Maze, animate_solution2, dynamic_programming, animate_solution
+from maze import Maze, animate_solution2, dynamic_programming
 import numpy as np
-
+import matplotlib.pyplot as plt
 maze = np.array([
     [0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 1, 0, 0],

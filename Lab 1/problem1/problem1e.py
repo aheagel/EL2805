@@ -23,5 +23,11 @@ V_survival, policy_survival = value_iteration(env, survival_gamma, accuracy_thet
 # You can now simulate this new policy
 method = 'ValIter'
 start  = ((0,0), (6,5))
-path = env.simulate(start, policy_survival, method)[0]
-animate_solution2(maze, path)
+
+for i in range(int(1E4)):
+    path = env.simulate(start, policy_survival, method)[0]
+    path[-1] =
+#animate_solution2(maze, path)
+
+print(V_survival[env.map[start]])
+

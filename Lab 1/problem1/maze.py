@@ -43,7 +43,7 @@ class Maze:
     STAY_REWARD = 0          #TODO # set all the movement reward to zero for a short path optimal path
     GOAL_REWARD = 1          #TODO
     IMPOSSIBLE_REWARD = 0    #TODO
-    MINOTAUR_REWARD = -1000      #TODO
+    MINOTAUR_REWARD = 0      #TODO
 
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
@@ -284,13 +284,13 @@ def dynamic_programming(env, horizon):
         :return numpy.array policy: Optimal time-varying policy at every state,
                                     dimension S*T
     """
-    V = np.zeros((env.n_states, horizon))
-    policy = np.zeros((env.n_states, horizon), dtype=int)
+    V = np.zeros((env.n_states, horizon+1))
+    policy = np.zeros((env.n_states, horizon+1), dtype=int)
     
     # Boundary conditions: terminal states give absorbing value
-    V[:, horizon - 1] = np.max(env.rewards, axis=1)    # Bellman function at boundary 
+    V[:, horizon] = np.max(env.rewards, axis=1)    # Bellman function at boundary 
 
-    for t in range(horizon - 2, -1, -1):
+    for t in range(horizon - 1, -1, -1):
         # Compute expected future value functions and Q-function and the terminal states
         future_values = np.einsum('ijk,j->ik', env.transition_probabilities, V[:, t + 1])
         Q_function = env.rewards + future_values 
@@ -458,7 +458,7 @@ if __name__ == "__main__":
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
     
     env = Maze(maze) # Create an environment maze
-    horizon = 20      # TODO: Finite horizon this is the Time we have to reach the exit
+    horizon = 16      # TODO: Finite horizon this is the Time we have to reach the exit
 
     # Solve the MDP problem with dynamic programming
     V, policy = dynamic_programming(env, horizon)  
