@@ -19,6 +19,7 @@ LIGHT_GREEN  = '#95FD99'
 BLACK        = '#000000'
 WHITE        = '#FFFFFF'
 LIGHT_PURPLE = '#E8D0FF'
+GOLD         = '#FFD700'
 
 class Maze:
 
@@ -358,7 +359,7 @@ def animate_solution2(maze, path):
     """ Animates the solution path in the maze """
     
     # Map a color to each cell in the maze
-    col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE}
+    col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE, 3: GOLD}
     
     rows, cols = maze.shape
     fig, ax = plt.subplots(figsize=(cols, rows))

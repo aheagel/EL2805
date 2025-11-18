@@ -4,15 +4,14 @@ import matplotlib.pyplot as plt
 from scipy.stats import geom
 
 maze = np.array([
-    [0, 0, 1, 0, 0, 0, 0, 3],
+    [0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 1, 0, 0],
     [0, 0, 1, 0, 0, 1, 1, 1],
     [0, 0, 1, 0, 0, 1, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 1, 1, 0],
     [0, 0, 0, 0, 1, 2, 0, 0]])
-# With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-
+# With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
 env = Maze(maze) # Create an environment maze
 
 # Define the survival gamma and an accuracy threshold
