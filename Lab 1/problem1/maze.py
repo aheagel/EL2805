@@ -40,10 +40,10 @@ class Maze:
 
     # Reward values 
     STEP_REWARD = 0          #TODO
-    STAY_REWARD = -1          #TODO
+    STAY_REWARD = 0          #TODO # set all the movement reward to zero for a short path optimal path
     GOAL_REWARD = 1          #TODO
     IMPOSSIBLE_REWARD = 0    #TODO
-    MINOTAUR_REWARD = 0      #TODO
+    MINOTAUR_REWARD = -1000      #TODO
 
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
@@ -178,7 +178,7 @@ class Maze:
                 next_states = self.__move(s, a)
                 prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
                 for next_state in next_states:
-                    transition_probabilities[s, self.map[next_state], a] += prob
+                    transition_probabilities[s, self.map[next_state], a] += prob # Accumulate probabilities for each possible next state as we could have the same state multiple times
 
         return transition_probabilities
 
@@ -229,11 +229,11 @@ class Maze:
         
         if method == 'DynProg':
             horizon = policy.shape[1] # Deduce the horizon from the policy shape
-            t = 0 # Initialize current time
+            t = 1 # Initialize current time
             s = self.map[start] # Initialize current state 
             path.append(start) # Add the starting position in the maze to the path
             
-            while t < horizon - 1:
+            while t < horizon:
                 a = policy[s, t] # Move to next state given the policy and the current state
                 probs = self.transition_probabilities[s, :, a]
                 next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
@@ -249,11 +249,10 @@ class Maze:
             next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO 
             path.append(next_s) # Add the next state to the path
             
-            horizon = 100                              # Question e
+            horizon = geom.rvs(p=1/30)                              # Question e
             # Loop while state is not the goal state
-            while next_s not in ["Win", "Eaten"] and t <= horizon:
+            while next_s not in ["Done"] and t <= horizon:
                 s = self.map[next_s] # Update state
-                next_states = self.__move(s, policy[s]) # Move to next state given the policy and the current state
                 probs = self.transition_probabilities[s, :, policy[s]]
                 next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO 
                 path.append(next_s) # Add the next state to the path
@@ -433,9 +432,9 @@ def animate_solution2(maze, path):
             minotaur_pos = path[i][1]
             grid.get_celld()[(player_pos[0], player_pos[1])].set_facecolor(col_map[-2])  # Player
             grid.get_celld()[(minotaur_pos[0], minotaur_pos[1])].set_facecolor(col_map[-1])  # Minotaur
-            ax.set_title(f'Policy simulation - Step {i+1}/{len(path)}')
+            ax.set_title(f'Policy simulation - Step {i}')
         else:
-            ax.set_title(f'Policy simulation - Step {i+1} - {path[i]}!')
+            ax.set_title(f'Policy simulation - Step {i} - {path[i]}!')
 
         return grid,
 

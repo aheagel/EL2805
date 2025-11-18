@@ -32,7 +32,7 @@ for i in range(1,31):
     lst2.append(V2[env2.map[start], 0])
 
 
-def plot_values(values, filename=None):
+def plot_values(values, name, filename=None):
     """Plot the values list vs iteration number and optionally save to filename.
 
     Args:
@@ -44,7 +44,7 @@ def plot_values(values, filename=None):
     plt.scatter(iterations, values, marker='o')
     plt.xlabel('Number of iterations')
     plt.ylabel('Value at start state / Probability of winning')
-    plt.title('Value at start vs number of iterations (Dynamic Programming)')
+    plt.title(f'Value at start vs number of iterations (Dynamic Programming) for {name}')
     plt.grid(True)
     if filename:
         plt.savefig(filename, dpi=150, bbox_inches='tight')
@@ -54,6 +54,6 @@ def plot_values(values, filename=None):
 
 # After computing `lst` for iterations 1..30, plot the results and save the figure.
 if __name__ == '__main__':
-    plot_values(lst)
-    plot_values(lst2)
+    plot_values(lst, "Still Minotaur")
+    plot_values(lst2, "Moving Minotaur")
 
