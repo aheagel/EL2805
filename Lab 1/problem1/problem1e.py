@@ -1,6 +1,7 @@
 from maze import Maze, value_iteration, animate_solution2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import geom
 
 maze = np.array([
     [0, 0, 1, 0, 0, 0, 0, 0],
@@ -14,16 +15,12 @@ maze = np.array([
 
 env = Maze(maze) # Create an environment maze
 
-# Define the survival gamma and an accuracy threshold
-survival_gamma = 29/30
+# Define the discount and an accuracy threshold
+discount = 29/30
 accuracy_theta = 1e-12  # A small number for convergence
-
-# Solve for the optimal survival policy
-V, policy = value_iteration(env, survival_gamma, accuracy_theta)
-
-# You can now simulate this new policy
-method = 'ValIter'
 start  = ((0,0), (6,5))
 
-path = env.simulate(start, policy, method)[0]
+horizon = geom.rvs(p=1-discount)
+V, policy = value_iteration(env, discount, accuracy_theta)
+path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 animate_solution2(maze, path)

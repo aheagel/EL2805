@@ -93,7 +93,7 @@ class Maze:
         
         return states, map
 
-    def __move(self, state, action):               
+    def move(self, state, action):               
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.
         
@@ -175,7 +175,7 @@ class Maze:
         # Pre-compute all next states for all (state, action) pairs
         for s in range(self.n_states):
             for a in range(self.n_actions):
-                next_states = self.__move(s, a)
+                next_states = self.move(s, a)
                 prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
                 for next_state in next_states:
                     transition_probabilities[s, self.map[next_state], a] += prob # Accumulate probabilities for each possible next state as we could have the same state multiple times
@@ -202,7 +202,7 @@ class Maze:
                 elif self.states[s] == "Done": # The game is over
                     rewards[s, a] = 0
                 else:                
-                    next_states = self.__move(s,a)
+                    next_states = self.move(s,a)
                     next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
                     
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
@@ -216,49 +216,6 @@ class Maze:
 
         return rewards
 
-
-
-
-    def simulate(self, start, policy, method):
-        
-        if method not in methods:
-            error = 'ERROR: the argument method must be in {}'.format(methods)
-            raise NameError(error)
-
-        path = list()
-        
-        if method == 'DynProg':
-            horizon = policy.shape[1] # Deduce the horizon from the policy shape
-            t = 0 # Initialize current time
-            s = self.map[start] # Initialize current state 
-            path.append(start) # Add the starting position in the maze to the path
-            
-            while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
-                a = policy[s, t] # Move to next state given the policy and the current state
-                probs = self.transition_probabilities[s, :, a]
-                next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
-                path.append(next_s) # Add the next state to the path
-                t += 1 # Update time and state for next iteration
-                s = self.map[next_s]
-                
-        if method == 'ValIter': 
-            horizon = geom.rvs(p=1/30)                              # Question e
-            t = 1 # Initialize current state, next state and time
-            s = self.map[start]
-            path.append(start) # Add the starting position in the maze to the path
-
-            while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
-                a = policy[s] # Move to next state given the policy and the current state
-                probs = self.transition_probabilities[s, :, a]
-                next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
-                path.append(next_s) # Add the next state to the path
-                t += 1 # Update time and state for next iteration
-                s = self.map[next_s]
-        
-        return [path, horizon] # Return the horizon as well, to plot the histograms for the VI
-
-
-
     def show(self):
         print('The states are :')
         print(self.states)
@@ -269,8 +226,29 @@ class Maze:
         print('The rewards:')
         print(self.rewards)
 
-
-
+    def simulate(self, start, policy, horizon):
+        """ Simulates a path in the maze given a policy obtained
+            :input Maze self           : The maze selfironment in which we seek to
+            :input tuple start       : The starting position of the player and the minotaur
+            :input int horizon       : The time T up to which we simulate the path.
+            :return list objects          : The path followed in the maze and mm.
+            """
+        
+        path = [] # Initialize the path
+        t = 0 # Initialize current time
+        s = self.map[start] # Initialize current state 
+        path.append(start) # Add the starting position in the maze to the path
+        
+        while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
+            a = policy[s, t] # Move to next state given the policy and the current state
+            probs = self.transition_probabilities[s, :, a]
+            next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
+            path.append(next_s) # Add the next state to the path
+            t += 1 # Update time and state for next iteration
+            s = self.map[next_s]
+        
+        return path
+    
 def dynamic_programming(env, horizon):
     """ Solves the shortest path problem using dynamic programming
         :input Maze env           : The maze environment in which we seek to
@@ -458,12 +436,9 @@ if __name__ == "__main__":
     env = Maze(maze) # Create an environment maze
     horizon = 20      # TODO: Finite horizon this is the Time we have to reach the exit
 
-    # Solve the MDP problem with dynamic programming
-    V, policy = dynamic_programming(env, horizon)  
-
     # Simulate the shortest path starting from position A
-    method = 'DynProg'
     start  = ((0,0), (6,5))
-    path = env.simulate(start, policy, method)[0]
+    V, policy = dynamic_programming(env, horizon)
+    path = env.simulate(start, policy, policy.shape[1])
 
     animate_solution2(maze, path)

@@ -16,25 +16,22 @@ maze = np.array([
 env = Maze(maze) # Create an environment maze
 
 # Define the survival gamma and an accuracy threshold
-survival_gamma = 29/30
+discount = 29/30
 accuracy_theta = 1e-12  # A small number for convergence
-
-# Solve for the optimal survival policy
-V, policy = value_iteration(env, survival_gamma, accuracy_theta)
-
-# You can now simulate this new policy
-method = 'ValIter'
 start  = ((0,0), (6,5))
 
-iteration = 1E5
+V, policy = value_iteration(env, discount, accuracy_theta)
+
+iteration = 1E4
 mapping = np.empty(int(iteration), dtype=bool)
 for i in range(int(iteration)):
-    path = env.simulate(start, policy, method)[0]
+    horizon = geom.rvs(p=1-discount)-1 # Subtract 1 to get number of steps as we start from state 0
+    path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
     mapping[i] = path[-1] == 'Win'
 
 #animate_solution2(maze, path)
 
-print(f"Theoretical via theory: {1-geom.cdf(15, 1 - survival_gamma)}")
+print(f"Theoretical via theory: {1-geom.cdf(15, 1 - discount)}")
 print(f"Value iteration survival probability: {V[env.map[start]]}")
 print(f"Estimated survival probability by winning over {int(iteration)} iterations: {np.sum(mapping)/iteration}")
 
