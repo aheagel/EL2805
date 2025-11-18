@@ -58,15 +58,19 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
-    survival_prob = 1/50
-    env = MazeAdvanced(maze, prob_to_player=0.5, still_minotaur=True) # Create an environment maze
 
-    V, policy = value_iteration(env, gamma=1-survival_prob, epsilon=1e-5)
-    #V, policy = dynamic_programming(env, horizon=30)
-    # Simulate the shortest path starting from position A
-    method = 'ValIter'  # Choose either 'DynProg' or 'ValIter'
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=True) # Create an environment maze
+
+    # Define the discount and an accuracy threshold
+    discount = 49/50
+    accuracy_theta = 1e-12  # A small number for convergence
     start  = ((0,0), (6,5))
-    path = env.simulate(start, policy, method)[0]
+
+    V, policy = value_iteration(env, discount, accuracy_theta)
+
+    horizon = geom.rvs(p=1-discount) - 1
+    path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
     print(V[env.map[start]])
+    print(horizon)
     animate_solution2(maze, path)

@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 from scipy.stats import geom
 
 maze = np.array([
-    [0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 0, 3],
     [0, 0, 1, 0, 0, 1, 0, 0],
     [0, 0, 1, 0, 0, 1, 1, 1],
     [0, 0, 1, 0, 0, 1, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 1, 1, 1, 1, 1, 0],
     [0, 0, 0, 0, 1, 2, 0, 0]])
-# With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
+# With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
 
 env = Maze(maze) # Create an environment maze
 
