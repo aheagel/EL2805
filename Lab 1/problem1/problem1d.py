@@ -42,7 +42,7 @@ def plot_values(values, name):
     iterations = list(range(1, len(values) + 1))
     plt.figure(figsize=(8, 5))
     plt.scatter(iterations, values, marker='o')
-    plt.xlabel('Number of iterations')
+    plt.xlabel('Horizons')
     plt.ylabel('Value at start state / Probability of winning')
     plt.title(f'Value at start vs number of iterations (Dynamic Programming) for {name}')
     plt.grid(True)

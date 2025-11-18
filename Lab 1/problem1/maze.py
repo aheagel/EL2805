@@ -229,11 +229,11 @@ class Maze:
         
         if method == 'DynProg':
             horizon = policy.shape[1] # Deduce the horizon from the policy shape
-            t = 1 # Initialize current time
+            t = 0 # Initialize current time
             s = self.map[start] # Initialize current state 
             path.append(start) # Add the starting position in the maze to the path
             
-            while t < horizon:
+            while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
                 a = policy[s, t] # Move to next state given the policy and the current state
                 probs = self.transition_probabilities[s, :, a]
                 next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
@@ -242,21 +242,18 @@ class Maze:
                 s = self.map[next_s]
                 
         if method == 'ValIter': 
+            horizon = geom.rvs(p=1/30)                              # Question e
             t = 1 # Initialize current state, next state and time
             s = self.map[start]
             path.append(start) # Add the starting position in the maze to the path
-            probs = self.transition_probabilities[s, :, policy[s]]
-            next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO 
-            path.append(next_s) # Add the next state to the path
-            
-            horizon = geom.rvs(p=1/30)                              # Question e
-            # Loop while state is not the goal state
-            while next_s not in ["Done"] and t <= horizon:
-                s = self.map[next_s] # Update state
-                probs = self.transition_probabilities[s, :, policy[s]]
-                next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO 
+
+            while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
+                a = policy[s] # Move to next state given the policy and the current state
+                probs = self.transition_probabilities[s, :, a]
+                next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
                 path.append(next_s) # Add the next state to the path
-                t += 1 # Update time for next iteration
+                t += 1 # Update time and state for next iteration
+                s = self.map[next_s]
         
         return [path, horizon] # Return the horizon as well, to plot the histograms for the VI
 
@@ -284,13 +281,13 @@ def dynamic_programming(env, horizon):
         :return numpy.array policy: Optimal time-varying policy at every state,
                                     dimension S*T
     """
-    V = np.zeros((env.n_states, horizon+1))
-    policy = np.zeros((env.n_states, horizon+1), dtype=int)
+    V = np.zeros((env.n_states, horizon))
+    policy = np.zeros((env.n_states, horizon), dtype=int)
     
     # Boundary conditions: terminal states give absorbing value
-    V[:, horizon] = np.max(env.rewards, axis=1)    # Bellman function at boundary 
+    V[:, horizon-1] = np.max(env.rewards, axis=1)    # Bellman function at boundary 
 
-    for t in range(horizon - 1, -1, -1):
+    for t in range(horizon - 2, -1, -1):
         # Compute expected future value functions and Q-function and the terminal states
         future_values = np.einsum('ijk,j->ik', env.transition_probabilities, V[:, t + 1])
         Q_function = env.rewards + future_values 
@@ -314,13 +311,14 @@ def value_iteration(env, gamma, epsilon):
     """
     V = np.zeros(env.n_states) # V0
     delta = 100
-    while delta > epsilon/gamma - epsilon:
+    while delta > epsilon*(1 - gamma) / gamma:
         expected_future_rewards = env.rewards + gamma * np.einsum('ijk,j->ik', env.transition_probabilities, V)
         V_next = np.max(expected_future_rewards, axis=1)
         delta = np.linalg.norm(V_next - V, np.inf) # Max norm
         V = V_next
     
     policy = np.argmax(env.rewards + gamma * np.einsum('ijk,j->ik', env.transition_probabilities, V), axis=1)
+    #policy = np.argmax(expected_future_rewards, axis=1) # Would be the same as above when converged
     return V, policy
 
 
@@ -458,7 +456,7 @@ if __name__ == "__main__":
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
     
     env = Maze(maze) # Create an environment maze
-    horizon = 16      # TODO: Finite horizon this is the Time we have to reach the exit
+    horizon = 20      # TODO: Finite horizon this is the Time we have to reach the exit
 
     # Solve the MDP problem with dynamic programming
     V, policy = dynamic_programming(env, horizon)  
