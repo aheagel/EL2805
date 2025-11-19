@@ -1,10 +1,10 @@
 from problem1h import MazeAdvanced
 import numpy as np
 from scipy.stats import geom
-from maze import animate_solution
+from maze import animate_solution2
 
 # Lets do Q-learning on the advanced maze environment
-def Q_learning(env, start, Q=None,n_episodes=50000, gamma=0.99, epsilon=0.1) -> np.ndarray:
+def Q_learning(env, start, Q=None, alpha=None, n_episodes=50000, gamma=0.99, epsilon=0.5) -> np.ndarray:
     """
     Q-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
     
@@ -20,10 +20,13 @@ def Q_learning(env, start, Q=None,n_episodes=50000, gamma=0.99, epsilon=0.1) -> 
     """
 
     if Q is None:
-        Q = env.rewards # Initialize Q-table with zeros
+        Q = np.zeros((env.n_states, env.n_actions)) # Initialize Q-table with zeros
     
+    if alpha is None:
+        alpha = lambda n: n**-(2/3)  # Learning rate function
+    
+    number_of_visits = np.zeros((env.n_states, env.n_actions))
     for episode in range(n_episodes):
-        number_of_visits = np.zeros((env.n_states, env.n_actions))
         state = env.map[start] # Reset to start state at the beginning of each episode
         for step in range(geom.rvs(1-gamma)): # Steps before Death
             if np.random.rand() < epsilon:
@@ -37,12 +40,10 @@ def Q_learning(env, start, Q=None,n_episodes=50000, gamma=0.99, epsilon=0.1) -> 
             next_state = np.random.choice(env.n_states, p=probs)  # Sample next state
             reward = env.rewards[state, action]
 
-            terminal = env.states[next_state] in ['Done']
-
-            Q[state, action] += number_of_visits[state, action]**(-2/3) * (reward + gamma * np.max(Q[next_state]) - Q[state, action])
+            Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * np.max(Q[next_state]) - Q[state, action])
             
             state = next_state
-            if terminal:
+            if env.states[next_state] in ['Done']:
                 break
                 
     return Q
@@ -72,4 +73,4 @@ if __name__ == "__main__":
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
-    animate_solution(maze, path)
+    animate_solution2(maze, path)
