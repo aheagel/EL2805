@@ -2,17 +2,10 @@ from maze import *
 
 class MazeAdvanced(Maze):
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
-        self.prob_to_player           = prob_to_player # Cant super init sadly
-        self.maze                     = maze
-        self.still_minotaur           = still_minotaur
-        self.actions                  = self._Maze__actions()
-        self.states, self.map         = self.__states()
-        self.n_actions                = len(self.actions)
-        self.n_states                 = len(self.states)
-        self.transition_probabilities = self.__transitions()
-        self.rewards                  = self._Maze__rewards()
+        self.prob_to_player = prob_to_player
+        super().__init__(maze, still_minotaur=still_minotaur)
 
-    def __states(self):
+    def init_states(self):
         
         states = dict()
         map = dict()
@@ -42,47 +35,38 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    def __transitions(self):
-        """ Computes the transition probabilities for every state action pair.
-            :return numpy.tensor transition probabilities: tensor of transition
-            probabilities of dimension S*S*A
+    def minotaur_probs(self, states):
+        """ Given a list of possible next states, return the probability distribution
+            over these states according to the Minotaur's policy.
+            :input list states         : List of possible next states.
+            :return tuple next_state   : Chosen next state.
         """
-        # Initialize the transition probailities tensor (S,S,A)
-        dimensions = (self.n_states,self.n_states,self.n_actions)
-        transition_probabilities = np.zeros(dimensions)
+        probs = np.zeros(self.n_states)
 
-        # Vectorized computation of transition probabilities
-        # Pre-compute all next states for all (state, action) pairs
-        for s in range(self.n_states):
-            for a in range(self.n_actions):
-                next_states = self.__move(s, a)
-                prob = (1-self.prob_to_player) / len(next_states) #Minotaur moves uniformly at random 0.65 times out of 1
-                
-                min_dist = self.maze.shape[0] + self.maze.shape[1] + 1  # Initialize with a large distance
-                min_state = None
-                for next_state in next_states:
-                    transition_probabilities[s, self.map[next_state], a] += prob # Accumulate probabilities for each possible next state as we could have the same state multiple times
+        min_dist = self.maze.shape[0] + self.maze.shape[1] + 1  # Initialize with a large distance
+        min_state = None
 
-                    if next_state == 'Eaten':
-                        dist = 0
-                    elif next_state in ['Done', 'Win']:
-                        dist = self.maze.shape[0] + self.maze.shape[1]  # Large distance for terminal states 
-                    else:
-                        player_pos = np.array(next_state[0])
-                        minotaur_pos = np.array(next_state[1])
-                        dist = np.linalg.norm(minotaur_pos - player_pos, ord=1)  # Manhattan distance
+        for next_state in states:
+            if next_state == 'Eaten':
+                dist = 0
+            elif next_state in ['Done', 'Win']:
+                dist = self.maze.shape[0] + self.maze.shape[1]  # Large distance for terminal states 
+            else:
+                player_pos = np.array(next_state[0])
+                minotaur_pos = np.array(next_state[1])
+                dist = np.linalg.norm(minotaur_pos - player_pos, ord=1)  # Manhattan distance
 
-                    if dist < min_dist:
-                        min_dist = dist
-                        min_state = next_state
-                
-                # Add the probability of the Minotaur moving towards the player
-                transition_probabilities[s, self.map[min_state], a] += self.prob_to_player
-    
+            if dist < min_dist:
+                min_dist = dist
+                min_state = next_state
+            
+            probs[self.map[next_state]] += (1 - self.prob_to_player) / len(states)
+        
+        probs[self.map[min_state]] += self.prob_to_player
 
-        return transition_probabilities
+        return probs
 
-    def __move(self, state, action): # 3 state system              
+    def move(self, state, action): # 3 state system              
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.
         
@@ -152,7 +136,8 @@ class MazeAdvanced(Maze):
                         states.append(((row_player, col_player), (rows_minotaur[i], cols_minotaur[i]), current_has_key))
 
                 return states
-            
+                
+     
 if __name__ == "__main__":
     # Description of the maze as a numpy array
     maze = np.array([
@@ -178,7 +163,7 @@ if __name__ == "__main__":
     horizon = 100 #geom.rvs(p=1-discount) - 1
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
-    print(V[env.map[start]])
+    print('Value function', V[env.map[start]])
     print(horizon)
     print("True probability for ideal case when we know the optimal policy (Minotaur can't stand still)", 1-geom.cdf(29, p=1-discount)) # special case when we got opposite parity
     animate_solution2(maze, path)

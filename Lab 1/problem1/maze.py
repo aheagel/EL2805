@@ -42,25 +42,26 @@ class Maze:
     }
 
     # Reward values 
-    STEP_REWARD = -1          #TODO
-    STAY_REWARD = -1          #TODO # set all the movement reward to zero for a short path optimal path
-    GOAL_REWARD = 100          #TODO
-    IMPOSSIBLE_REWARD = -100    #TODO
-    MINOTAUR_REWARD = -1000      #TODO
+    STEP_REWARD         = 0          #TODO
+    STAY_REWARD         = 0          #TODO # set all the movement reward to zero for a short path optimal path
+    GOAL_REWARD         = 1          #TODO
+    IMPOSSIBLE_REWARD   = 0          #TODO
+    MINOTAUR_REWARD     = 0          #TODO
 
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
         """
         self.maze                     = maze
         self.still_minotaur           = still_minotaur
-        self.actions                  = self.__actions()
-        self.states, self.map         = self.__states()
+        self.actions                  = self.init_actions()
+        self.states, self.map         = self.init_states()
         self.n_actions                = len(self.actions)
         self.n_states                 = len(self.states)
-        self.transition_probabilities = self.__transitions()
-        self.rewards                  = self.__rewards()
+        self.transition_probabilities = self.init_transitions()
+        self.rewards                  = self.init_rewards()
 
-    def __actions(self):
+
+    def init_actions(self):
         actions = dict()
         actions[self.STAY]       = (0, 0)
         actions[self.MOVE_LEFT]  = (0,-1)
@@ -69,7 +70,8 @@ class Maze:
         actions[self.MOVE_DOWN]  = (1, 0)
         return actions
 
-    def __states(self):
+
+    def init_states(self):
         
         states = dict()
         map = dict()
@@ -96,7 +98,19 @@ class Maze:
         
         return states, map
 
-    def __move(self, state, action):               
+
+    def minotaur_probs(self, states):
+        """ Given a list of possible next states, probability distribution
+            :input list states         : List of possible next states.
+            :return tuple next_state   : Chosen next state.
+        """
+        probs = np.zeros(self.n_states)
+        for state in states:
+            probs[self.map[state]] += 1.0 / len(states)
+        return probs
+
+
+    def move(self, state, action):               
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.
         
@@ -164,8 +178,7 @@ class Maze:
                 return states
         
         
-
-    def __transitions(self):
+    def init_transitions(self): # Only works for the minotaur moving randomly and determinisitic finite horizon
         """ Computes the transition probabilities for every state action pair.
             :return numpy.tensor transition probabilities: tensor of transition
             probabilities of dimension S*S*A
@@ -178,16 +191,13 @@ class Maze:
         # Pre-compute all next states for all (state, action) pairs
         for s in range(self.n_states):
             for a in range(self.n_actions):
-                next_states = self.__move(s, a)
-                prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
-                for next_state in next_states:
-                    transition_probabilities[s, self.map[next_state], a] += prob # Accumulate probabilities for each possible next state as we could have the same state multiple times
-
+                next_states = self.move(s, a)
+                transition_probabilities[s, :, a] = self.minotaur_probs(next_states)
+                
         return transition_probabilities
 
 
-
-    def __rewards(self):
+    def init_rewards(self):
         
         """ Computes the rewards for every state action pair """
 
@@ -205,7 +215,7 @@ class Maze:
                 elif self.states[s] == "Done": # The game is over
                     rewards[s, a] = 0
                 else:                
-                    next_states = self.__move(s,a)
+                    next_states = self.move(s,a)
                     next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
                     
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
@@ -219,6 +229,7 @@ class Maze:
 
         return rewards
 
+
     def show(self):
         print('The states are :')
         print(self.states)
@@ -228,6 +239,7 @@ class Maze:
         print(self.map)
         print('The rewards:')
         print(self.rewards)
+
 
     def simulate(self, start, policy, horizon):
         """ Simulates a path in the maze given a policy obtained
@@ -242,14 +254,16 @@ class Maze:
         s = self.map[start] # Initialize current state 
         path.append(start) # Add the starting position in the maze to the path
         
-        while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
+        while self.states[s] not in ["Done"] and t < horizon:
             a = policy[s, t] # Move to next state given the policy and the current state
-            next_s = self.__move(s, a)
-            probs = self.transition_probabilities[s, :, a]
-            next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
-            path.append(next_s) # Add the next state to the path
+            next_states = self.move(s, a)
+
+            probs = self.minotaur_probs(next_states) #TODO Choose one of the possible next states (deterministic policy)
+            next_s = np.random.choice(self.n_states, p=probs)  # Sample next state
+
+            path.append(self.states[next_s]) # Add the next state to the path
             t += 1 # Update time and state for next iteration
-            s = self.map[next_s]
+            s = next_s
         
         return path
     

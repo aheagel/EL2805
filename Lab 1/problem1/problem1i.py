@@ -36,8 +36,7 @@ def Q_learning(env, start, Q=None, alpha=None, n_episodes=50000, gamma=0.99, eps
 
             number_of_visits[state, action] += 1
 
-            probs = env.transition_probabilities[state, :, action]
-            next_state = np.random.choice(env.n_states, p=probs)  # Sample next state
+            probs = env.minotaur_prob
             reward = env.rewards[state, action]
 
             Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * np.max(Q[next_state]) - Q[state, action])
