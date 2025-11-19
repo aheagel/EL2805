@@ -2,17 +2,17 @@ from maze import *
 
 class MazeAdvanced(Maze):
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
-        self.prob_to_player           = prob_to_player
+        self.prob_to_player           = prob_to_player # Cant super init sadly
         self.maze                     = maze
         self.still_minotaur           = still_minotaur
         self.actions                  = self._Maze__actions()
-        self.states, self.map         = self.__advanced_states()
+        self.states, self.map         = self.__states()
         self.n_actions                = len(self.actions)
         self.n_states                 = len(self.states)
-        self.transition_probabilities = self.__advanced_transitions()
+        self.transition_probabilities = self.__transitions()
         self.rewards                  = self._Maze__rewards()
 
-    def __advanced_states(self):
+    def __states(self):
         
         states = dict()
         map = dict()
@@ -42,7 +42,7 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    def __advanced_transitions(self):
+    def __transitions(self):
         """ Computes the transition probabilities for every state action pair.
             :return numpy.tensor transition probabilities: tensor of transition
             probabilities of dimension S*S*A
@@ -55,7 +55,7 @@ class MazeAdvanced(Maze):
         # Pre-compute all next states for all (state, action) pairs
         for s in range(self.n_states):
             for a in range(self.n_actions):
-                next_states = self.move(s, a)
+                next_states = self.__move(s, a)
                 prob = (1-self.prob_to_player) / len(next_states) #Minotaur moves uniformly at random 0.65 times out of 1
                 
                 min_dist = self.maze.shape[0] + self.maze.shape[1] + 1  # Initialize with a large distance
@@ -82,7 +82,7 @@ class MazeAdvanced(Maze):
 
         return transition_probabilities
 
-    def move(self, state, action): # 3 state system              
+    def __move(self, state, action): # 3 state system              
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.
         
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
 
 
-    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=True) # Create an environment maze
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False) # Create an environment maze
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -175,9 +175,10 @@ if __name__ == "__main__":
 
     V, policy = value_iteration(env, discount, accuracy_theta)
 
-    horizon = geom.rvs(p=1-discount) - 1
+    horizon = 100 #geom.rvs(p=1-discount) - 1
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
     print(V[env.map[start]])
     print(horizon)
+    print("True probability for ideal case when we know the optimal policy (Minotaur can't stand still)", 1-geom.cdf(29, p=1-discount)) # special case when we got opposite parity
     animate_solution2(maze, path)

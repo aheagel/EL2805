@@ -40,11 +40,11 @@ class Maze:
     }
 
     # Reward values 
-    STEP_REWARD = 0          #TODO
-    STAY_REWARD = 0          #TODO # set all the movement reward to zero for a short path optimal path
-    GOAL_REWARD = 1          #TODO
-    IMPOSSIBLE_REWARD = 0    #TODO
-    MINOTAUR_REWARD = 0      #TODO
+    STEP_REWARD = -1          #TODO
+    STAY_REWARD = -1          #TODO # set all the movement reward to zero for a short path optimal path
+    GOAL_REWARD = 100          #TODO
+    IMPOSSIBLE_REWARD = -100    #TODO
+    MINOTAUR_REWARD = -1000      #TODO
 
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
@@ -94,7 +94,7 @@ class Maze:
         
         return states, map
 
-    def move(self, state, action):               
+    def __move(self, state, action):               
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.
         
@@ -176,7 +176,7 @@ class Maze:
         # Pre-compute all next states for all (state, action) pairs
         for s in range(self.n_states):
             for a in range(self.n_actions):
-                next_states = self.move(s, a)
+                next_states = self.__move(s, a)
                 prob = 1.0 / len(next_states) #Minotaur moves uniformly at random
                 for next_state in next_states:
                     transition_probabilities[s, self.map[next_state], a] += prob # Accumulate probabilities for each possible next state as we could have the same state multiple times
@@ -203,7 +203,7 @@ class Maze:
                 elif self.states[s] == "Done": # The game is over
                     rewards[s, a] = 0
                 else:                
-                    next_states = self.move(s,a)
+                    next_states = self.__move(s,a)
                     next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
                     
                     if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
@@ -242,6 +242,7 @@ class Maze:
         
         while self.states[s] not in ["Done", "Win", "Eaten"] and t < horizon:
             a = policy[s, t] # Move to next state given the policy and the current state
+            next_s = self.__move(s, a)
             probs = self.transition_probabilities[s, :, a]
             next_s = self.states[np.random.choice(self.n_states, p=probs)] #TODO Choose one of the possible next states (deterministic policy)
             path.append(next_s) # Add the next state to the path
@@ -305,7 +306,7 @@ def value_iteration(env, gamma, epsilon):
 def animate_solution(maze, path, save_frames=False, frames_dir='problem1/frames'):
 
     # Map a color to each cell in the maze
-    col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE}
+    col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE, 3: GOLD}
     
     rows, cols = maze.shape # Size of the maze
     fig = plt.figure(1, figsize=(cols, rows)) # Create figure of the size of the maze
