@@ -4,6 +4,22 @@ from scipy.stats import geom
 from maze import animate_solution2, value_iteration
 import matplotlib.pyplot as plt
 
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+def moving_max(a, n=100):
+    # Create a sliding window view of the array
+    # This creates a view of shape (len(a) - n + 1, n)
+    shape = a.shape[:-1] + (a.shape[-1] - n + 1, n)
+    strides = a.strides + (a.strides[-1],)
+    sliding_window = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+    
+    # Calculate max along the window axis
+    return np.min(sliding_window, axis=-1)
+
+
 # Lets do Q-learning on the advanced maze environment
 def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -32,7 +48,7 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
     rewards = np.zeros(n_episodes)  # To store rewards for each episode
     for episode in range(n_episodes):
         state = env.map[start] # Reset to start state at the beginning of each episode
-        while True:#for step in range(geom.rvs(1-gamma)): # Steps before Death
+        for step in range(geom.rvs(1-gamma)): # Steps before Death
             if np.random.rand() < epsilon:
                 action = np.random.randint(env.n_actions)  # Explore: random action
             else:
@@ -65,7 +81,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -73,7 +89,7 @@ if __name__ == "__main__":
 
     V_star, _ = value_iteration(env, discount, 1e-12)
 
-    itera = 50000
+    itera = 25000
     alpha0 = lambda n: n**(-2/3)
     alpha1 = lambda n: n**(-3/4)
     alpha2 = lambda n: n**(-1)
@@ -89,15 +105,16 @@ if __name__ == "__main__":
     animate_solution2(maze, path)
 
     # Plot the Rewards
+    shift = 1000
     plt.figure(figsize=(10, 6))
-    cumsum_rewards0 = np.cumsum(rewards0) / np.arange(1, itera+1)
-    cumsum_rewards1 = np.cumsum(rewards1) / np.arange(1, itera+1)
-    cumsum_rewards2 = np.cumsum(rewards2) / np.arange(1, itera+1)
+    cumsum_rewards0 = moving_max(rewards0, n=shift) 
+    cumsum_rewards1 = moving_max(rewards1, n=shift) 
+    cumsum_rewards2 = moving_max(rewards2, n=shift) 
 
-    plt.plot(np.arange(1,itera+1), cumsum_rewards0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), cumsum_rewards1, label=r'$\alpha(n) = n^{-3/4}$', marker='x', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), cumsum_rewards2, label=r'$\alpha(n) = n^{-1}$', marker='+', markersize=4, markevery=100, linewidth=1)
-    plt.axhline(y=1, color='k', linestyle='--', label='Optimal Reward Approximation')
+    plt.plot(np.arange(shift,itera+1), cumsum_rewards0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(shift,itera+1), cumsum_rewards1, label=r'$\alpha(n) = n^{-3/4}$', marker='x', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(shift,itera+1), cumsum_rewards2, label=r'$\alpha(n) = n^{-1}$', marker='+', markersize=4, markevery=100, linewidth=1)
+    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')
     plt.ylabel('Cumulative Average Rewards')

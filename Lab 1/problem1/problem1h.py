@@ -42,10 +42,7 @@ class MazeAdvanced(Maze):
             :return tuple next_state   : Chosen next state.
         """
         probs = np.zeros(self.n_states)
-
-        min_dist = self.maze.shape[0] + self.maze.shape[1] + 1  # Initialize with a large distance
-        min_state = None
-
+        dists = np.ones(self.n_states) * np.inf
         for next_state in states:
             if next_state == 'Eaten':
                 dist = 0
@@ -55,14 +52,16 @@ class MazeAdvanced(Maze):
                 player_pos = np.array(next_state[0])
                 minotaur_pos = np.array(next_state[1])
                 dist = np.linalg.norm(minotaur_pos - player_pos, ord=1)  # Manhattan distance
-
-            if dist < min_dist:
-                min_dist = dist
-                min_state = next_state
             
-            probs[self.map[next_state]] += (1 - self.prob_to_player) / len(states)
+            dists[self.map[next_state]] = dist
+            probs[self.map[next_state]] += 1 / len(states)
         
-        probs[self.map[min_state]] += self.prob_to_player
+        min_dist = np.min(dists)
+        mask = (dists == min_dist)
+        n_len = sum(mask)
+
+        probs[mask] += self.prob_to_player / n_len
+
 
         return probs
 
