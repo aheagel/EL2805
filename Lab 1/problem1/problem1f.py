@@ -12,7 +12,7 @@ maze = np.array([
     [0, 1, 1, 1, 1, 1, 1, 0],
     [0, 0, 0, 0, 1, 2, 0, 0]])
 # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze
-env = Maze(maze, still_minotaur=True) # Create an environment maze
+env = Maze(maze, still_minotaur=False) # Create an environment maze
 
 # Define the survival gamma and an accuracy threshold
 discount = 29/30
