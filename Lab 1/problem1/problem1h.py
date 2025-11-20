@@ -35,35 +35,37 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    def minotaur_probs(self, states):
+    def minotaur_states_probs(self, states):
         """ Given a list of possible next states, return the probability distribution
             over these states according to the Minotaur's policy.
             :input list states         : List of possible next states.
             :return tuple next_state   : Chosen next state.
         """
-        probs = np.zeros(self.n_states)
-        dists = np.ones(self.n_states) * np.inf
+        probs = {}
+        dists = {}
         for next_state in states:
+            state_idx = self.map[next_state]
             if next_state == 'Eaten':
                 dist = 0
             elif next_state in ['Done', 'Win']:
-                dist = self.maze.shape[0] + self.maze.shape[1]  # Large distance for terminal states 
+                dist = np.inf
             else:
                 player_pos = np.array(next_state[0])
                 minotaur_pos = np.array(next_state[1])
                 dist = np.linalg.norm(minotaur_pos - player_pos, ord=1)  # Manhattan distance
             
-            dists[self.map[next_state]] = dist
-            probs[self.map[next_state]] += 1 / len(states)
+            dists[state_idx] = dist
+            probs[state_idx] = probs.get(state_idx, 0) + (1 - self.prob_to_player) / len(states)
+
+        # Find minimum distance and count states with that distance
+        min_dist = min(dists.values())
+        min_states = [key for key, dist in dists.items() if dist == min_dist]
         
-        min_dist = np.min(dists)
-        mask = (dists == min_dist)
-        n_len = sum(mask)
+        # Distribute extra probability to states with minimum distance
+        for key in min_states:
+            probs[key] += self.prob_to_player / len(min_states)
 
-        probs[mask] += self.prob_to_player / n_len
-
-
-        return probs
+        return list(probs.keys()), list(probs.values())
 
     def move(self, state, action): # 3 state system              
         """ Makes a step in the maze, given a current position and an action. 

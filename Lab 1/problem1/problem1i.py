@@ -3,23 +3,9 @@ import numpy as np
 from scipy.stats import geom
 from maze import animate_solution2, value_iteration
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
-def moving_average(a, n=3):
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
-
-def moving_max(a, n=100):
-    # Create a sliding window view of the array
-    # This creates a view of shape (len(a) - n + 1, n)
-    shape = a.shape[:-1] + (a.shape[-1] - n + 1, n)
-    strides = a.strides + (a.strides[-1],)
-    sliding_window = np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-    
-    # Calculate max along the window axis
-    return np.min(sliding_window, axis=-1)
-
-
+# FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do Q-learning on the advanced maze environment
 def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -40,35 +26,37 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
         number_of_visits = np.zeros((env.n_states, env.n_actions))  # To keep track of state-action visits
 
     if Q is None:
-        Q = np.zeros((env.n_states, env.n_actions)) # Initialize Q-table with zeros
+        Q = np.random.rand(env.n_states, env.n_actions) # Initialize Q-table with random to help with initial exploration
     
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
     
-    rewards = np.zeros(n_episodes)  # To store rewards for each episode
-    for episode in range(n_episodes):
+    V_starts = np.zeros(n_episodes)  # To store rewards for each episode
+    for episode in tqdm(range(n_episodes)):
         state = env.map[start] # Reset to start state at the beginning of each episode
-        for step in range(geom.rvs(1-gamma)): # Steps before Death
+        for _ in range(geom.rvs(1-gamma)): # Steps before Death
             if np.random.rand() < epsilon:
                 action = np.random.randint(env.n_actions)  # Explore: random action
             else:
-                action = np.argmax(Q[state])  # Exploit: best action from Q-table
-
-            number_of_visits[state, action] += 1
-
-            probs = env.minotaur_probs(env.move(state, action))
-            next_state = np.random.choice(env.n_states, p=probs)
+                max_mask = (Q[state] == Q[state].max())
+                action = np.argmax(max_mask + np.random.rand(*Q[state].shape))  # Exploit: best action from Q-table with random tie-breaking
 
             reward = env.rewards[state, action]
-            rewards[episode] += reward
+            number_of_visits[state, action] += 1
+
+            mino_states, probs = env.minotaur_states_probs(env.move(state, action))
+            next_state = np.random.choice(mino_states, p=probs)
+
 
             Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * np.max(Q[next_state]) - Q[state, action])
-            
+
             state = next_state
             if env.states[next_state] in ['Done']:
                 break
-                
-    return Q, number_of_visits, rewards
+
+        V_starts[episode] = np.max(Q[env.map[start]])
+
+    return Q, number_of_visits, V_starts
 
 if __name__ == "__main__":
     # Define the maze layout
@@ -81,7 +69,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -89,35 +77,26 @@ if __name__ == "__main__":
 
     V_star, _ = value_iteration(env, discount, 1e-12)
 
-    itera = 25000
+    itera = 50000
     alpha0 = lambda n: n**(-2/3)
-    alpha1 = lambda n: n**(-3/4)
-    alpha2 = lambda n: n**(-1)
 
-    Q0, number_of_visits0, rewards0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1)
-    Q1, number_of_visits1, rewards1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=0.1)
-    Q2, number_of_visits2, rewards2 = Q_learning(env, start, n_episodes=itera, alpha=alpha2, gamma=discount, epsilon=0.1)
-    
+    Q = np.random.rand(env.n_states, env.n_actions)
+    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1)
+
     policy = np.argmax(Q0, axis=1)
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
     animate_solution2(maze, path)
 
-    # Plot the Rewards
-    shift = 1000
+    # Plot the convergence
     plt.figure(figsize=(10, 6))
-    cumsum_rewards0 = moving_max(rewards0, n=shift) 
-    cumsum_rewards1 = moving_max(rewards1, n=shift) 
-    cumsum_rewards2 = moving_max(rewards2, n=shift) 
 
-    plt.plot(np.arange(shift,itera+1), cumsum_rewards0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(shift,itera+1), cumsum_rewards1, label=r'$\alpha(n) = n^{-3/4}$', marker='x', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(shift,itera+1), cumsum_rewards2, label=r'$\alpha(n) = n^{-1}$', marker='+', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')
-    plt.ylabel('Cumulative Average Rewards')
+    plt.ylabel('Value at Start State approximations')
     plt.title('Convergence of Q-Learning with different alpha')
     plt.legend()
     plt.grid(True)

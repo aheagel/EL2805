@@ -8,8 +8,6 @@ import matplotlib
 matplotlib.use('Qt5Agg') # use when windows 
 import time
 from IPython import display
-import random
-import os
 from scipy.stats import geom
 
 # Implemented methods
@@ -99,15 +97,17 @@ class Maze:
         return states, map
 
 
-    def minotaur_probs(self, states):
+    def minotaur_states_probs(self, states):
         """ Given a list of possible next states, probability distribution
             :input list states         : List of possible next states.
             :return tuple next_state   : Chosen next state.
         """
-        probs = np.zeros(self.n_states)
+        probs = {}
         for state in states:
-            probs[self.map[state]] += 1.0 / len(states)
-        return probs
+            state_idx = self.map[state]
+            probs[state_idx] = probs.get(state_idx, 0) + 1.0 / len(states)
+
+        return list(probs.keys()), list(probs.values())
 
 
     def move(self, state, action):               
@@ -192,7 +192,8 @@ class Maze:
         for s in range(self.n_states):
             for a in range(self.n_actions):
                 next_states = self.move(s, a)
-                transition_probabilities[s, :, a] = self.minotaur_probs(next_states)
+                idx, values = self.minotaur_states_probs(next_states)
+                transition_probabilities[s, idx, a] = values
                 
         return transition_probabilities
 
@@ -258,8 +259,8 @@ class Maze:
             a = policy[s, t] # Move to next state given the policy and the current state
             next_states = self.move(s, a)
 
-            probs = self.minotaur_probs(next_states) #TODO Choose one of the possible next states (deterministic policy)
-            next_s = np.random.choice(self.n_states, p=probs)  # Sample next state
+            idx, probs = self.minotaur_states_probs(next_states) #TODO Choose one of the possible next states (deterministic policy)
+            next_s = np.random.choice(idx, p=probs)  # Sample next state
 
             path.append(self.states[next_s]) # Add the next state to the path
             t += 1 # Update time and state for next iteration
@@ -290,7 +291,8 @@ def dynamic_programming(env, horizon):
 
         # Compute the optimal value and policy
         V[:, t] = np.max(Q_function, axis=1)
-        policy[:, t] = np.argmax(Q_function, axis=1)
+        max_mask = (Q_function == Q_function.max(axis=1, keepdims=True))
+        policy[:, t] = (max_mask * np.random.rand(*Q_function.shape)).argmax(axis=1) # Break ties randomly
 
     return V, policy
 
@@ -319,7 +321,7 @@ def value_iteration(env, gamma, epsilon):
 
 
 
-def animate_solution(maze, path, save_frames=False, frames_dir='problem1/frames'):
+def animate_solution(maze, path):
 
     # Map a color to each cell in the maze
     col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -1: LIGHT_RED, -2: LIGHT_PURPLE, 3: GOLD}
@@ -351,10 +353,6 @@ def animate_solution(maze, path, save_frames=False, frames_dir='problem1/frames'
         cell.set_height(1.0/rows)
         cell.set_width(1.0/cols)
 
-    # Create frames directory if saving is enabled
-    if save_frames:
-        os.makedirs(frames_dir, exist_ok=True)
-
     for i in range(0, len(path)):
         if path[i-1] != 'Eaten' and path[i-1] != 'Win':
             grid.get_celld()[(path[i-1][0])].set_facecolor(col_map[maze[path[i-1][0]]])
@@ -363,11 +361,6 @@ def animate_solution(maze, path, save_frames=False, frames_dir='problem1/frames'
             grid.get_celld()[(path[i][0])].set_facecolor(col_map[-2]) # Position of the player
             grid.get_celld()[(path[i][1])].set_facecolor(col_map[-1]) # Position of the minotaur
         display.display(fig)
-        
-        # Save frame if requested
-        if save_frames:
-            frame_path = os.path.join(frames_dir, f'frame_{i:03d}.png')
-            fig.savefig(frame_path, dpi=150, bbox_inches='tight')
         
         time.sleep(0.5)
         display.clear_output(wait = True)

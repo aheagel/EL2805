@@ -20,7 +20,7 @@ discount = 29/30
 accuracy_theta = 1e-12  # A small number for convergence
 start  = ((0,0), (6,5))
 
-horizon = geom.rvs(p=1-discount)
+horizon = 100#geom.rvs(p=1-discount)
 V, policy = value_iteration(env, discount, accuracy_theta)
 path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 animate_solution2(maze, path)

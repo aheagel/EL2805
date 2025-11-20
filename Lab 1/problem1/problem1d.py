@@ -1,6 +1,7 @@
 from maze import Maze, dynamic_programming
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 lst=[]
 lst2=[]
@@ -19,7 +20,7 @@ maze = np.array([
 env = Maze(maze, still_minotaur=True) # Create an environment maze
 env2 = Maze(maze, still_minotaur=False)
 
-for i in range(1,31):
+for i in tqdm(range(1,31)):
     # Solve the MDP problem with dynamic programming and pathing 
     V, policy = dynamic_programming(env, i)  
     V2, policy2 = dynamic_programming(env2, i)
