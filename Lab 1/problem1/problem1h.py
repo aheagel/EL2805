@@ -39,7 +39,7 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    def init_rewards(self):
+    '''def init_rewards(self):
         
         """ Computes the rewards for every state action pair """
 
@@ -73,8 +73,8 @@ class MazeAdvanced(Maze):
                     else: # Stay
                         rewards[s, a] = self.STAY_REWARD
 
-        return rewards    
-    
+        return rewards'''
+
     def minotaur_states_probs(self, states):
         """ Given a list of possible next states, return the probability distribution
             over these states according to the Minotaur's policy.
