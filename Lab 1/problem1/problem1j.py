@@ -45,8 +45,9 @@ def SARSA_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
+        eps = epsilon(episode+1)
         state = env.map[start] # Reset to start state at the beginning of each episode
-        action = epsilon_greedy_policy(state, epsilon(episode+1))
+        action = epsilon_greedy_policy(state, eps)
 
         while env.states[state] not in ['Done']:
             number_of_visits[state, action] += 1
@@ -54,7 +55,7 @@ def SARSA_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q
             reward = env.rewards[state, action]
             mino_states, probs = env.minotaur_states_probs(env.move(state, action))
             next_state = np.random.choice(mino_states, p=probs)
-            next_action = epsilon_greedy_policy(next_state, epsilon(episode+1))
+            next_action = epsilon_greedy_policy(next_state, eps)
 
             Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * Q[next_state, next_action] - Q[state, action])
 
@@ -103,8 +104,8 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\epsilon = 0.1$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\epsilon = 0.2$', marker='x', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\epsilon = 0.1$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\epsilon = 0.2$', marker='x', markersize=4, markevery=10000, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')

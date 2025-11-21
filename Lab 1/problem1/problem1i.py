@@ -45,10 +45,11 @@ def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=Non
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
+        eps = epsilon(episode+1)
         state = env.map[start] # Reset to start state at the beginning of each episode
-        
+
         while env.states[state] not in ['Done']:
-            action = epsilon_greedy_policy(state, epsilon(episode+1))
+            action = epsilon_greedy_policy(state, eps)
             reward = env.rewards[state, action]
             number_of_visits[state, action] += 1
 
@@ -102,8 +103,8 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=10000, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')
