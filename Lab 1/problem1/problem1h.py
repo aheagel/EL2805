@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     V, policy = value_iteration(env, discount, accuracy_theta)
 
-    horizon = 100 #geom.rvs(p=1-discount) - 1
+    horizon = 100 #np.random.geometric(p=1-discount)
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
     print('Value function', V[env.map[start]])

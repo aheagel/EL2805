@@ -8,7 +8,6 @@ import matplotlib
 matplotlib.use('Qt5Agg') # use when windows 
 import time
 from IPython import display
-from scipy.stats import geom
 
 # Implemented methods
 methods = ['DynProg', 'ValIter']
