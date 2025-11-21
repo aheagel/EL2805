@@ -82,12 +82,14 @@ if __name__ == "__main__":
 
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
-    epps = 0.05
-
+    epps0 = 0.1
+    epps1 = 0.2
+    
     Q_start = np.random.rand(env.n_states, env.n_actions)
 
-    Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=epps, Q=Q_start.copy())
-
+    Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=epps0, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = SARSA_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=epps1, Q=Q_start.copy())
+    
     policy = np.argmax(Q0, axis=1)
 
     horizon = 100
@@ -98,12 +100,13 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\epsilon = 0.1$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\epsilon = 0.2$', marker='x', markersize=4, markevery=100, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')
-    plt.title('Convergence of SARSA-Learning with different alpha')
+    plt.title('Convergence of Q-Learning with different alpha')
     plt.legend()
     plt.grid(True)
     plt.show()
