@@ -70,7 +70,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50

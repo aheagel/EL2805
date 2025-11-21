@@ -1,4 +1,5 @@
 from maze import *
+from scipy.stats import geom
 
 class MazeAdvanced(Maze):
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
