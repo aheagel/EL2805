@@ -21,12 +21,12 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
     Returns:
     - Q: The learned Q-table.
     """
-    def epsilon_greedy_policy(current_state):
-        if np.random.rand() < epsilon:
+    def epsilon_greedy_policy(current_state, eps=epsilon):
+        if np.random.rand() < eps:
             action = np.random.randint(env.n_actions)  # Explore: random action
         else:
-            max_mask = (Q[current_state] == Q[current_state].max())
-            action = np.argmax(max_mask + np.random.rand(*Q[current_state].shape))  # Exploit: best action from Q-table with random tie-breaking
+            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
+            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
         return action
     
     if number_of_visits is None:
@@ -39,9 +39,11 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
         alpha = lambda n: n**-(2/3)  # Learning rate function
     
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
+    Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
         state = env.map[start] # Reset to start state at the beginning of each episode
-        for _ in range(np.random.geometric(p=1-gamma)): # Steps before Death
+        
+        while env.states[state] not in ['Done']:
             action = epsilon_greedy_policy(state)
             reward = env.rewards[state, action]
             number_of_visits[state, action] += 1
@@ -49,13 +51,10 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
             mino_states, probs = env.minotaur_states_probs(env.move(state, action))
             next_state = np.random.choice(mino_states, p=probs)
 
-
-            Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * np.max(Q[next_state]) - Q[state, action])
+            Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * Q[next_state].max() - Q[state, action])
 
             state = next_state
-            if env.states[next_state] in ['Done']:
-                break
-
+            
         V_starts[episode] = np.max(Q[env.map[start]])
 
     return Q, number_of_visits, V_starts
@@ -84,9 +83,10 @@ if __name__ == "__main__":
     alpha1 = lambda n: n**(-3/4)
     alpha2 = lambda n: n**(-1)
 
-    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1)
-    Q1, number_of_visits1, v_start1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=0.1)
-    Q2, number_of_visits2, v_start2 = Q_learning(env, start, n_episodes=itera, alpha=alpha2, gamma=discount, epsilon=0.1)
+    Q_start = np.random.rand(env.n_states, env.n_actions)
+    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=0.1, Q=Q_start.copy())
+    Q2, number_of_visits2, v_start2 = Q_learning(env, start, n_episodes=itera, alpha=alpha2, gamma=discount, epsilon=0.1, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
     horizon = 100

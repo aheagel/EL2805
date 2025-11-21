@@ -8,7 +8,7 @@ from tqdm import tqdm
 # Lets do SARSA learning on the advanced maze environment
 def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Q-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
+    SARSA-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
     
     Parameters:
     - env: The MazeAdvanced environment.
@@ -20,12 +20,13 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     Returns:
     - Q: The learned Q-table.
     """
-    def epsilon_greedy_policy(current_state):
-        if np.random.rand() < epsilon:
+    
+    def epsilon_greedy_policy(current_state, eps=epsilon):
+        if np.random.rand() < eps:
             action = np.random.randint(env.n_actions)  # Explore: random action
         else:
-            max_mask = (Q[current_state] == Q[current_state].max())
-            action = np.argmax(max_mask + np.random.rand(*Q[current_state].shape))  # Exploit: best action from Q-table with random tie-breaking
+            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
+            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
         return action
     
     if number_of_visits is None:
@@ -37,24 +38,24 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
     
+
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
+    Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
         state = env.map[start] # Reset to start state at the beginning of each episode
-        for _ in range(np.random.geometric(p=1-gamma)): # Steps before Death
-            action = epsilon_greedy_policy(state)
-            reward = env.rewards[state, action]
+        action = epsilon_greedy_policy(state)
+
+        while env.states[state] not in ['Done']:
             number_of_visits[state, action] += 1
 
+            reward = env.rewards[state, action]
             mino_states, probs = env.minotaur_states_probs(env.move(state, action))
             next_state = np.random.choice(mino_states, p=probs)
             next_action = epsilon_greedy_policy(next_state)
 
-
             Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * Q[next_state, next_action] - Q[state, action])
 
-            state = next_state
-            if env.states[next_state] in ['Done']:
-                break
+            state, action = next_state, next_action
 
         V_starts[episode] = np.max(Q[env.map[start]])
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
