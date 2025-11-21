@@ -39,42 +39,6 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    def init_rewards(self):
-        
-        """ Computes the rewards for every state action pair """
-
-        rewards = np.zeros((self.n_states, self.n_actions))
-        
-        for s in range(self.n_states):
-            for a in range(self.n_actions):
-                current_state = self.states[s]
-                if current_state == 'Eaten': # The player has been eaten
-                    rewards[s, a] = self.MINOTAUR_REWARD
-                
-                elif current_state == 'Win': # The player has won
-                    rewards[s, a] = self.GOAL_REWARD
-                
-                elif current_state == "Done": # The game is over
-                    rewards[s, a] = 0
-                
-                elif self.maze[current_state[0][0], current_state[0][1]] == 3 and current_state[2] == False: # We are at a key but has no key
-                    rewards[s, a] = self.KEY_REWARD
-                
-                else:                
-                    next_states = self.move(s,a)
-                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
-                    
-                    if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
-                        rewards[s, a] = self.IMPOSSIBLE_REWARD
-                    
-                    elif a != self.STAY: # Move 
-                        rewards[s, a] = self.STEP_REWARD
-                    
-                    else: # Stay
-                        rewards[s, a] = self.STAY_REWARD
-
-        return rewards
-    
     def minotaur_states_probs(self, states):
         """ Given a list of possible next states, return the probability distribution
             over these states according to the Minotaur's policy.

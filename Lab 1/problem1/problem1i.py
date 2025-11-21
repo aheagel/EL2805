@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do Q-learning on the advanced maze environment
-
 def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Q-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
@@ -72,7 +71,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -82,15 +81,16 @@ if __name__ == "__main__":
 
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
-    alpha1 = lambda n: n**(-3/4)
-    alpha2 = lambda n: n**(-1)
-
+    alpha1 = lambda n: n**(-4/5)
+    epps = 0.05
+    
     Q_start = np.random.rand(env.n_states, env.n_actions)
-    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1, Q=Q_start.copy())
-    Q1, number_of_visits1, v_start1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=0.1, Q=Q_start.copy())
-    Q2, number_of_visits2, v_start2 = Q_learning(env, start, n_episodes=itera, alpha=alpha2, gamma=discount, epsilon=0.1, Q=Q_start.copy())
+
+    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=epps, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=epps, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
+
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
@@ -100,8 +100,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 6))
 
     plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-3/4}$', marker='x', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start2, label=r'$\alpha(n) = n^{-1}$', marker='+', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=100, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')

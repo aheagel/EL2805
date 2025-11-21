@@ -72,7 +72,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -82,10 +82,14 @@ if __name__ == "__main__":
 
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
+    epps = 0.05
 
-    Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1)
+    Q_start = np.random.rand(env.n_states, env.n_actions)
+
+    Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=epps, Q=Q_start.copy())
 
     policy = np.argmax(Q0, axis=1)
+
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
