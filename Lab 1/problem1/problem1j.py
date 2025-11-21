@@ -21,14 +21,6 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     - Q: The learned Q-table.
     """
     
-    def epsilon_greedy_policy(current_state, eps=epsilon):
-        if np.random.rand() < eps:
-            action = np.random.randint(env.n_actions)  # Explore: random action
-        else:
-            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
-            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
-        return action
-    
     if number_of_visits is None:
         number_of_visits = np.zeros((env.n_states, env.n_actions))  # To keep track of state-action visits
 
@@ -37,7 +29,15 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
-    
+
+    def epsilon_greedy_policy(current_state, eps=epsilon):
+        if np.random.rand() < eps:
+            action = np.random.randint(env.n_actions)  # Explore: random action
+        else:
+            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
+            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
+        return action    
+
 
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
