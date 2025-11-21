@@ -20,15 +20,7 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
     
     Returns:
     - Q: The learned Q-table.
-    """
-    def epsilon_greedy_policy(current_state, eps=epsilon):
-        if np.random.rand() < eps:
-            action = np.random.randint(env.n_actions)  # Explore: random action
-        else:
-            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
-            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
-        return action
-    
+    """  
     if number_of_visits is None:
         number_of_visits = np.zeros((env.n_states, env.n_actions))  # To keep track of state-action visits
 
@@ -37,7 +29,16 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
     
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
+
+    def epsilon_greedy_policy(current_state, _eps=epsilon, _Q=Q):
+        if np.random.rand() < _eps:
+            action = np.random.randint(env.n_actions)  # Explore: random action
+        else:
+            best = np.flatnonzero(_Q[current_state] == _Q[current_state].max())
+            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
+        return action
     
+
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 1, 2, 0, 0]])
     # With the convention 0 = empty cell, 1 = obstacle, 2 = exit of the Maze, 3 = key
-    env = MazeAdvanced(maze, prob_to_player=1, still_minotaur=False)
+    env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
 
     # Define the discount and an accuracy threshold
     discount = 49/50
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
     alpha1 = lambda n: n**(-3/4)
-    alpha2 = lambda n: n**(-1)
+    alpha2 = lambda n: n**(-4/5)
 
     Q_start = np.random.rand(env.n_states, env.n_actions)
     Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1, Q=Q_start.copy())
