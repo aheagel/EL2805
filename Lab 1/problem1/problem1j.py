@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do SARSA learning on the advanced maze environment
-def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def SARSA_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, epsilon=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     SARSA-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
     
@@ -30,7 +30,10 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
 
-    def epsilon_greedy_policy(current_state, eps=epsilon):
+    if epsilon is None:
+        epsilon = lambda k: 0.1 # Fixed exploration rate
+
+    def epsilon_greedy_policy(current_state, eps):
         if np.random.rand() < eps:
             action = np.random.randint(env.n_actions)  # Explore: random action
         else:
@@ -43,7 +46,7 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
         state = env.map[start] # Reset to start state at the beginning of each episode
-        action = epsilon_greedy_policy(state)
+        action = epsilon_greedy_policy(state, epsilon(episode+1))
 
         while env.states[state] not in ['Done']:
             number_of_visits[state, action] += 1
@@ -51,7 +54,7 @@ def SARSA_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, 
             reward = env.rewards[state, action]
             mino_states, probs = env.minotaur_states_probs(env.move(state, action))
             next_state = np.random.choice(mino_states, p=probs)
-            next_action = epsilon_greedy_policy(next_state)
+            next_action = epsilon_greedy_policy(next_state, epsilon(episode+1))
 
             Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * Q[next_state, next_action] - Q[state, action])
 
@@ -82,8 +85,8 @@ if __name__ == "__main__":
 
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
-    epps0 = 0.1
-    epps1 = 0.2
+    epps0 = lambda k: 0.1
+    epps1 = lambda k: 0.2
     
     Q_start = np.random.rand(env.n_states, env.n_actions)
 
