@@ -1,14 +1,14 @@
 from maze import *
-from scipy.stats import geom 
+from scipy.stats import geom
 
 class MazeAdvanced(Maze):
-    """ Advanced Maze environment where the player has to pick up a key before exiting. """
-    KEY_REWARD = Maze.GOAL_REWARD/2          # Reward for picking up the key
+    """ Class that implements the Maze environment with a Minotaur that can move """
+    KEY_REWARD          = Maze.GOAL_REWARD/10          # Reward for picking up the key might help the model
 
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
         self.prob_to_player = prob_to_player
         super().__init__(maze, still_minotaur=still_minotaur)
-
+        
     def init_states(self):
         
         states = dict()

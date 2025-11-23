@@ -6,8 +6,7 @@ from tqdm import tqdm
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do Q-learning on the advanced maze environment
-
-def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, gamma=0.99, epsilon=0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, epsilon=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Q-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
     
@@ -20,7 +19,8 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
     
     Returns:
     - Q: The learned Q-table.
-    """  
+    """
+    
     if number_of_visits is None:
         number_of_visits = np.zeros((env.n_states, env.n_actions))  # To keep track of state-action visits
 
@@ -38,14 +38,26 @@ def Q_learning(env, start, n_episodes=50000, number_of_visits=None, Q=None, alph
             action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
         return action
     
+    if epsilon is None:
+        epsilon = lambda k: 0.1 # Fixed exploration rate
+    
+    def epsilon_greedy_policy(current_state, eps):
+        if np.random.rand() < eps:
+            action = np.random.randint(env.n_actions)  # Explore: random action
+        else:
+            best = np.flatnonzero(Q[current_state] == Q[current_state].max())
+            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
+        return action
+
 
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
+        eps = epsilon(episode+1)
         state = env.map[start] # Reset to start state at the beginning of each episode
-        
+
         while env.states[state] not in ['Done']:
-            action = epsilon_greedy_policy(state)
+            action = epsilon_greedy_policy(state, eps)
             reward = env.rewards[state, action]
             number_of_visits[state, action] += 1
 
@@ -81,15 +93,16 @@ if __name__ == "__main__":
 
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
-    alpha1 = lambda n: n**(-3/4)
-    alpha2 = lambda n: n**(-4/5)
-
+    alpha1 = lambda n: n**(-4/5)
+    epps = lambda k: 0.1
+    
     Q_start = np.random.rand(env.n_states, env.n_actions)
-    Q0, number_of_visits0, v_start0 = Q_learning(env, start, n_episodes=itera, alpha=alpha0, gamma=discount, epsilon=0.1, Q=Q_start.copy())
-    Q1, number_of_visits1, v_start1 = Q_learning(env, start, n_episodes=itera, alpha=alpha1, gamma=discount, epsilon=0.1, Q=Q_start.copy())
-    Q2, number_of_visits2, v_start2 = Q_learning(env, start, n_episodes=itera, alpha=alpha2, gamma=discount, epsilon=0.1, Q=Q_start.copy())
+
+    Q0, number_of_visits0, v_start0 = Q_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = Q_learning(env, start, discount, n_episodes=itera, alpha=alpha1, epsilon=epps, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
+
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
@@ -98,9 +111,8 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-3/4}$', marker='x', markersize=4, markevery=100, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start2, label=r'$\alpha(n) = n^{-1}$', marker='+', markersize=4, markevery=100, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=10000, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
 
     plt.xlabel('Iterations')
