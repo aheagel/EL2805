@@ -30,12 +30,12 @@ if __name__ == "__main__":
     epps0 = lambda k: k**(-0.51)
     epps1 = lambda k: k**(-1)
     
-    Q_start = np.random.rand(env.n_states, env.n_actions)
+    Q_start = 10*np.random.rand(env.n_states, env.n_actions)
 
     Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps0, Q=Q_start.copy())
     Q1, number_of_visits1, v_start1 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps1, Q=Q_start.copy())
     
-    policy = np.argmax(Q1, axis=1)
+    policy = np.argmax(Q0, axis=1)
 
     horizon = 100
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
