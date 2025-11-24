@@ -84,9 +84,9 @@ if __name__ == "__main__":
     V_star, _ = value_iteration(env, discount, 1e-12)
 
     itera = 50000
-    alpha0 = lambda n: n**(-2/3)
-    alpha1 = lambda n: n**(-4/5)
-    epps = lambda k: 0.15
+    alpha0 = lambda n: n**(-0.51)
+    alpha1 = lambda n: n**(-2/3)
+    epps = lambda k: 0.2
     
     Q_start = np.random.rand(env.n_states, env.n_actions)
 
@@ -103,8 +103,8 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-0.51}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-2/3}$', marker='x', markersize=4, markevery=10000, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]:.4f}')
 
     plt.xlabel('Iterations')
