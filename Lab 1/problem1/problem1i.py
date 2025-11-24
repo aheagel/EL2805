@@ -30,17 +30,9 @@ def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=Non
     if alpha is None:
         alpha = lambda n: n**-(2/3)  # Learning rate function
 
-    def epsilon_greedy_policy(current_state, _eps=epsilon, _Q=Q):
-        if np.random.rand() < _eps:
-            action = np.random.randint(env.n_actions)  # Explore: random action
-        else:
-            best = np.flatnonzero(_Q[current_state] == _Q[current_state].max())
-            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
-        return action
-    
     if epsilon is None:
         epsilon = lambda k: 0.1 # Fixed exploration rate
-    
+
     def epsilon_greedy_policy(current_state, eps):
         if np.random.rand() < eps:
             action = np.random.randint(env.n_actions)  # Explore: random action
@@ -94,7 +86,7 @@ if __name__ == "__main__":
     itera = 50000
     alpha0 = lambda n: n**(-2/3)
     alpha1 = lambda n: n**(-4/5)
-    epps = lambda k: 0.1
+    epps = lambda k: 0.15
     
     Q_start = np.random.rand(env.n_states, env.n_actions)
 
@@ -113,7 +105,7 @@ if __name__ == "__main__":
 
     plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-2/3}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
     plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-4/5}$', marker='x', markersize=4, markevery=10000, linewidth=1)
-    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
+    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]:.4f}')
 
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')

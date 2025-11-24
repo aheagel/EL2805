@@ -108,7 +108,6 @@ class Maze:
 
         return list(probs.keys()), list(probs.values())
 
-
     def move(self, state, action):               
         """ Makes a step in the maze, given a current position and an action. 
             If the action STAY or an inadmissible action is used, the player stays in place.

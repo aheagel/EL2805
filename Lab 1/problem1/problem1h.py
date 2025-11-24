@@ -3,7 +3,7 @@ from scipy.stats import geom
 
 class MazeAdvanced(Maze):
     """ Class that implements the Maze environment with a Minotaur that can move """
-    KEY_REWARD          = Maze.GOAL_REWARD/10          # Reward for picking up the key might help the model
+    KEY_REWARD          = Maze.GOAL_REWARD / 2         # Reward for picking up the key might help the model
 
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
         self.prob_to_player = prob_to_player
@@ -39,8 +39,7 @@ class MazeAdvanced(Maze):
         
         return states, map
     
-    '''def init_rewards(self):
-        
+    def init_rewards(self):
         """ Computes the rewards for every state action pair """
 
         rewards = np.zeros((self.n_states, self.n_actions))
@@ -56,15 +55,15 @@ class MazeAdvanced(Maze):
                 
                 elif current_state == "Done": # The game is over
                     rewards[s, a] = 0
-                
-                elif self.maze[current_state[0][0], current_state[0][1]] == 3 and current_state[2] == False: # We are at a key but has no key
-                    rewards[s, a] = self.KEY_REWARD
-                
+
                 else:                
                     next_states = self.move(s,a)
                     next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
                     
-                    if self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
+                    if next_s[2] and not current_state[2]: # The player picks up the key
+                        rewards[s, a] = self.KEY_REWARD
+                        
+                    elif self.states[s][0] == next_s[0] and a != self.STAY: # The player hits a wall
                         rewards[s, a] = self.IMPOSSIBLE_REWARD
                     
                     elif a != self.STAY: # Move 
@@ -73,7 +72,7 @@ class MazeAdvanced(Maze):
                     else: # Stay
                         rewards[s, a] = self.STAY_REWARD
 
-        return rewards'''
+        return rewards
 
     def minotaur_states_probs(self, states):
         """ Given a list of possible next states, return the probability distribution
@@ -154,7 +153,10 @@ class MazeAdvanced(Maze):
                     
                     elif self.maze[self.states[state][0][0], self.states[state][0][1]] == 2 and current_has_key: #TODO
                         states.append('Win')
-                
+
+                    elif self.maze[self.states[state][0][0], self.states[state][0][1]] == 3 and not current_has_key:
+                        states.append(((self.states[state][0][0], self.states[state][0][1]), (rows_minotaur[i], cols_minotaur[i]), True))
+               
                     else:     # The player remains in place, the minotaur moves randomly
                         states.append(((self.states[state][0][0], self.states[state][0][1]), (rows_minotaur[i], cols_minotaur[i]), current_has_key))
                 
@@ -170,7 +172,7 @@ class MazeAdvanced(Maze):
                     elif self.maze[row_player, col_player] == 2 and self.states[state][2]: #TODO
                         states.append('Win')
                     
-                    elif self.maze[row_player, col_player] == 3: # The player reaches the exit without the key
+                    elif self.maze[row_player, col_player] == 3 and not current_has_key: # The player reaches the key without the key
                         states.append(((row_player, col_player), (rows_minotaur[i], cols_minotaur[i]), True))
 
                     else: # The player moves, the minotaur moves randomly

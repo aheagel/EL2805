@@ -47,11 +47,11 @@ if __name__ == "__main__":
 
     plt.plot(np.arange(1,itera+1), v_start0, label=r'$\epsilon = k^{-4/7}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
     plt.plot(np.arange(1,itera+1), v_start1, label=r'$\epsilon = k^{-4/5}$', marker='x', markersize=4, markevery=10000, linewidth=1)
-    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label='Optimal Reward Approximation')
+    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]:.4f}')
 
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')
-    plt.title('Convergence of Q-Learning with different alpha')
+    plt.title('Convergence of SARSA-Learning with different epsilon')
     plt.legend()
     plt.grid(True)
     plt.show()
