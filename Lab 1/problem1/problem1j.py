@@ -89,7 +89,7 @@ if __name__ == "__main__":
     epps0 = lambda k: 0.1
     epps1 = lambda k: 0.2
     
-    Q_start = 10*np.random.rand(env.n_states, env.n_actions)
+    Q_start = np.random.rand(env.n_states, env.n_actions)
 
     Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps0, Q=Q_start.copy())
     Q1, number_of_visits1, v_start1 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps1, Q=Q_start.copy())

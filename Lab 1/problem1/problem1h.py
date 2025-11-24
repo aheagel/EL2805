@@ -3,7 +3,7 @@ from scipy.stats import geom
 
 class MazeAdvanced(Maze):
     """ Class that implements the Maze environment with a Minotaur that can move """
-    KEY_REWARD          = Maze.GOAL_REWARD / 2         # Reward for picking up the key might help the model
+    KEY_REWARD          = 0 # Maze.GOAL_REWARD / 2         # Reward for picking up the key might help the model
 
     def __init__(self, maze, still_minotaur=True, prob_to_player=0.35):
         self.prob_to_player = prob_to_player
