@@ -8,9 +8,15 @@ import gymnasium as gym
 import torch
 import matplotlib.pyplot as plt
 
+from problem1.problem1j import SARSA_learning
+
 # Import and initialize Mountain Car Environment
 env = gym.make('MountainCar-v0')
 env.reset()
+
+assert isinstance(env.observation_space, gym.spaces.Box)
+assert isinstance(env.action_space, gym.spaces.Discrete)
+
 k = env.action_space.n      # tells you the number of actions
 low, high = env.observation_space.low, env.observation_space.high
 
