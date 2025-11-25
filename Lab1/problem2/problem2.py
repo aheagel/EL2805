@@ -8,7 +8,7 @@ import gymnasium as gym
 import torch
 import matplotlib.pyplot as plt
 
-from problem1.problem1j import SARSA_learning
+from Lab_1.problem1.problem1j import SARSA_learning
 
 # Import and initialize Mountain Car Environment
 env = gym.make('MountainCar-v0')
