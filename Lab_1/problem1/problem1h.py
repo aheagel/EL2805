@@ -58,7 +58,7 @@ class MazeAdvanced(Maze):
 
                 else:                
                     next_states = self.move(s,a)
-                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one
+                    next_s = next_states[0] # The reward does not depend on the next position of the minotaur, we just consider the players next position one, also the key state is fine as all the next states will have the same key state
                     
                     if next_s[2] and not current_state[2]: # The player picks up the key
                         rewards[s, a] = self.KEY_REWARD

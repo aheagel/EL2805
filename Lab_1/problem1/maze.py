@@ -39,11 +39,11 @@ class Maze:
     }
 
     # Reward values 
-    STEP_REWARD         = -0.1          #TODO
-    STAY_REWARD         = -0.2          #TODO # set all the movement reward to zero for a short path optimal path
+    STEP_REWARD         = 0#-0.1          #TODO
+    STAY_REWARD         = 0#-0.2          #TODO # set all the movement reward to zero for a short path optimal path
     GOAL_REWARD         = 1          #TODO
-    IMPOSSIBLE_REWARD   = -0.2          #TODO
-    MINOTAUR_REWARD     = -10         #TODO
+    IMPOSSIBLE_REWARD   = 0#-0.2          #TODO
+    MINOTAUR_REWARD     = 0#-10         #TODO
 
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
