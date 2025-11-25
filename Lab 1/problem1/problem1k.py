@@ -31,7 +31,7 @@ if __name__ == "__main__":
     eppsQ = lambda k: 0.2 #k**(-0.4)
 
     alphaS = lambda n: n**(-0.501)
-    eppsS = lambda k: 0.1
+    eppsS = lambda k: 0.5*k**(-0.6)
 
     # Q-learning
     Q_qlearning, visits_qlearning, V_qlearning = Q_learning(env, start, discount, n_episodes=n_episodes, alpha=alphaQ, epsilon=eppsQ, Q=Q_start.copy())
