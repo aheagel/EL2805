@@ -7,6 +7,7 @@ import numpy as np
 import gymnasium as gym
 import pickle
 from tqdm import trange
+import sys
 
 # Import and initialize Mountain Car Environment
 env = gym.make('MountainCar-v0')
@@ -33,7 +34,7 @@ CONFIDENCE_PASS = -135
 # Fourier basis
 p = 3
 try:
-    f = open('weights.pkl', 'rb')
+    f = open(sys.path[0] + '/weights.pkl', 'rb')
     data = pickle.load(f)
     if 'W' not in data or 'N' not in data:
         print('Matrix W (or N) is missing in the dictionary.')
