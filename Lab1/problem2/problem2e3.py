@@ -25,10 +25,11 @@ W_learned, rewards = SARSA2_learning(env,
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
-                                        eps=lambda k: 1 if k < 100 else 0.0,
+                                        eps=lambda k: 0.0001,
                                         l_rate=0.0005,
                                         eta=eta,
-                                        plot=True)
+                                        plot=True,
+                                        greedy=False)
 
 # Plot Rewards plot 1
 plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
