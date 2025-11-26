@@ -21,7 +21,7 @@ def Nestrov_iteration(x, v, grad_x, learning_rate, momentum):
     x_new = x + momentum * v_new + learning_rate * grad_x
     return x_new, v_new
 
-def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=0.001, plot=False, greedy=True) -> tuple[np.ndarray, list]:
+def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=0.001, plot=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
     Returns:
@@ -39,17 +39,6 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
     normed_eta = np.linalg.norm(eta, ord=2, axis=0) # Normalize learning rate
     episode_reward_list = []  # Used to save episodes reward
 
-    def boltzmann_policy(V, eps):
-        # We use a list comprehension or explicit loop since Value() might take single actions
-        
-        # Softmax calculation (subtract max for numerical stability)
-        exp_values = np.exp((V - np.max(V)) / eps)
-        probabilities = exp_values / np.sum(exp_values)
-        
-        # Select action based on probabilities
-        action = np.random.choice(len(probabilities), p=probabilities)
-        return action
-    
     def epsilon_greedy_policy(V, eps):
         if np.random.rand() < eps:
             action = np.random.randint(len(V))  # Explore: random action
@@ -87,11 +76,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
         current_state = scale_state_variables(env.reset()[0])
         current_value = Value(current_state, W, eta)
 
-        if greedy:
-            current_action = epsilon_greedy_policy(current_value, eps(episode))
-        else:
-            current_action = boltzmann_policy(current_value, eps(episode))
-
+        current_action = epsilon_greedy_policy(current_value, eps(episode))
         current_Q = current_value[current_action]
 
         while not terminal:
