@@ -109,6 +109,9 @@ if __name__ == "__main__":
     N_episodes = 400
     p=2
     eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
+    
+    #eta = eta[:, 1:]
+    #print(eta) For plot later
 
     # Train SARSA with Fourier Basis
     W_learned, rewards = SARSA2_learning(env,
@@ -130,7 +133,7 @@ if __name__ == "__main__":
     plt.grid(alpha=0.3)
     plt.show()
 
-    #pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
 
     env.render()
     env.close()

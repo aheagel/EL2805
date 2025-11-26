@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import pickle
 import matplotlib.pyplot as plt
-from problem2b import FourierBasis
+from problem2b import FourierBasis, Value
 from problem2 import scale_state_variables
 
 # Import and initialize Mountain Car Environment
@@ -16,34 +16,59 @@ try:
     if 'W' not in data or 'N' not in data:
         print('Matrix W (or N) is missing in the dictionary.')
         exit(-1)
-    w = data['W']
-    eta = data['N']
+    w = data['W'].T
+    eta = data['N'].T
 except:
     print('File weights.pkl not found!')
     exit(-1)
 
 
-def Value(state, W, action=None, _eta=eta):
-    if action is None: # This is the Value function
-        return W.T @ FourierBasis(state, _eta)
-    else: # This is the Q function for action 
-        return W[:, action].T @ FourierBasis(state, _eta) # This is the Q-value for a specific action
-
-# Plot 2 3D
-
+# INIT FOR PLOTTING
 x = np.linspace(env.observation_space.low[0], env.observation_space.high[0], 100)
 y = np.linspace(env.observation_space.low[1], env.observation_space.high[1], 100)
+x_scaled = scale_state_variables(np.array([x, np.zeros_like(x)]).T)
+y_scaled = scale_state_variables(np.array([np.zeros_like(y), y]).T)
+
 X, Y = np.meshgrid(x, y)
-grid_pairs = np.stack([X, Y], axis=-1)
+X_s, Y_s = np.meshgrid(x_scaled[:,0], y_scaled[:,1])
+
+grid_pairs = np.stack([X_s, Y_s], axis=-1).reshape(-1, 2)
 
 
-z = Value()
+# Plot 2 3D Value function surface plot
+z = Value(grid_pairs.T, w, eta)
 
+Z = np.max(z, axis=0).reshape(X.shape)
 
-plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
-plt.xlabel('Episodes')
-plt.ylabel('Total reward')
-plt.title('Total Reward vs Episodes')
-plt.legend()
-plt.grid(alpha=0.3)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(X, Y, Z, cmap='viridis')
+
+ax.set_xlabel('Position')
+ax.set_ylabel('Velocity')
+ax.set_zlabel('Value')
+ax.set_title('Surface Plot of the optimal policy as max Value function')
+
 plt.show()
+
+
+# Plot 3  3D Optimal Policy action plot
+
+z = Value(grid_pairs.T, w, eta)
+
+Z = np.argmax(z, axis=0).reshape(X.shape)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(X, Y, Z, cmap='viridis')
+
+ax.set_xlabel('Position')
+ax.set_ylabel('Velocity')
+ax.set_zlabel('Policy (Action)')
+ax.set_title('Surface Plot of the optimal policy as max Value function')
+
+plt.show()
+
+# Plot 4 
+# change 2b and run the plots TLDR It does we need 0 0 as it will act as our bias term in fourier basis basically cos(0)=1 so that weight will be our bias
+
