@@ -21,7 +21,7 @@ def Nestrov_iteration(x, v, grad_x, learning_rate, momentum):
     x_new = x + momentum * v_new + learning_rate * grad_x
     return x_new, v_new
 
-def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=0.1, l_rate=0.001) -> tuple[np.ndarray, list]:
+def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=0.001, plot=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
     Returns:
@@ -33,7 +33,9 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
         eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     if W is None:
         W = np.zeros((eta.shape[1], int(env.action_space.n)))  # Random initialization of weights
-    
+    if eps is None:
+        eps = lambda k: 0.1  # Default epsilon value
+
     normed_eta = np.linalg.norm(eta, ord=2, axis=0) # Normalize learning rate
     episode_reward_list = []  # Used to save episodes reward
 
@@ -62,7 +64,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
 
     for episode in tqdm(range(1, n_episodes+1)):
         # Switch to rendering for the last episode
-        if episode == n_episodes:
+        if episode == n_episodes and plot:
             env.close()
             env = gym.make('MountainCar-v0', render_mode='human')
 
@@ -73,7 +75,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
 
         current_state = scale_state_variables(env.reset()[0])
         current_value = Value(current_state, W, eta)
-        current_action = epsilon_greedy_policy(current_value, eps)
+        current_action = epsilon_greedy_policy(current_value, eps(episode))
         current_Q = current_value[current_action]
 
         while not terminal:
@@ -83,7 +85,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
 
             next_state = scale_state_variables(next_state)
             next_value = Value(next_state, W, eta) # With current policy
-            next_action = epsilon_greedy_policy(next_value, eps)
+            next_action = epsilon_greedy_policy(next_value, eps(episode))
             next_Q = next_value[next_action]
 
 
@@ -119,9 +121,10 @@ if __name__ == "__main__":
                                          discount=1,
                                          p=p,
                                          n_episodes=N_episodes,
-                                         eps=0,
+                                         eps=lambda k: 0.0,
                                          l_rate=0.0005,
-                                         eta=eta)
+                                         eta=eta,
+                                         plot=True)
 
     # Plot Rewards plot 1
     plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
@@ -132,9 +135,6 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(alpha=0.3)
     plt.show()
-
-    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
-
-    env.render()
     env.close()
 
+    #pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
