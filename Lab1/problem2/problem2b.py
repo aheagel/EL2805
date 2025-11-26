@@ -10,6 +10,12 @@ from problem2 import running_average, scale_state_variables
 def FourierBasis(state: np.ndarray, eta: np.ndarray) -> np.ndarray:
     return np.cos(np.pi * (eta.T @ state))
 
+def Value(state, W, eta, action=None):
+    if action is None:
+        return W.T @ FourierBasis(state, eta) 
+    else:
+        return W[:, action].T @ FourierBasis(state, eta) # This is the Q-value for a specific action
+        
 def Nestrov_iteration(x, v, grad_x, learning_rate, momentum):
     v_new = momentum * v + learning_rate * grad_x
     x_new = x + momentum * v_new + learning_rate * grad_x
@@ -39,12 +45,6 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
             action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
         return action 
     
-    def Value(state, W, action=None, _eta=eta):
-        if action is None:
-            return W.T @ FourierBasis(state, _eta)
-        else:
-            return W[:, action].T @ FourierBasis(state, _eta) # This is the Q-value for a specific action
-    
     def TD_error(reward, terminal, Q_current, Q_next, _discount=discount):
         if terminal:
             return reward - Q_current
@@ -72,7 +72,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
         terminal = False
 
         current_state = scale_state_variables(env.reset()[0])
-        current_value = Value(current_state, W)
+        current_value = Value(current_state, W, eta)
         current_action = epsilon_greedy_policy(current_value, eps)
         current_Q = current_value[current_action]
 
@@ -82,7 +82,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
             terminal = done or truncated
 
             next_state = scale_state_variables(next_state)
-            next_value = Value(next_state, W) # With current policy
+            next_value = Value(next_state, W, eta) # With current policy
             next_action = epsilon_greedy_policy(next_value, eps)
             next_Q = next_value[next_action]
 
@@ -116,12 +116,11 @@ if __name__ == "__main__":
                                          discount=1,
                                          p=p,
                                          n_episodes=N_episodes,
-                                         eps=0.01,
+                                         eps=0,
                                          l_rate=0.0005,
                                          eta=eta)
 
-
-    # Plot Rewards
+    # Plot Rewards plot 1
     plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
     plt.plot([i for i in range(1, N_episodes+1)], running_average(rewards, 50), label='Average episode reward')
     plt.xlabel('Episodes')
