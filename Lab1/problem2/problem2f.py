@@ -18,7 +18,7 @@ eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For sma
 
 # Train SARSA with Fourier Basis
 W_learned, rewards =    SARSA2_learning(env,
-                                        lamda=0.9,
+                                        lamda=0.85,
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
@@ -39,4 +39,4 @@ plt.show()
 env.render()
 env.close()
 
-pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+#pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save

@@ -32,8 +32,10 @@ if __name__ == "__main__":
                                             l_rate=a,
                                             eta=eta)
 
-    avg_rewards = np.mean(rewards_alpha[:,-50:], axis=1)
-    plt.plot(alphas, avg_rewards, marker='o')
+    data_a = rewards_alpha[:,-50:]
+    plt.plot(alphas, np.mean(data_a, axis=1), marker='o')
+    ci = 1.96 * np.std(data_a, axis=1)/np.sqrt(data_a.shape[1])
+    plt.fill_between(alphas, np.mean(data_a, axis=1)-ci, np.mean(data_a, axis=1)+ci, color='b', alpha=0.2)
     plt.xscale('log')
     plt.xlabel('Learning Rate (alpha)')
     plt.ylabel('Average Reward over last 50 Episodes')
@@ -50,9 +52,13 @@ if __name__ == "__main__":
                                             p=p,
                                             n_episodes=N_episodes,
                                             eps=lambda k: 0,
-                                            l_rate=alphas[np.argmax(avg_rewards)],
+                                            l_rate=alphas[np.argmax(np.mean(data_a, axis=1))],
                                             eta=eta)
-    plt.plot(lambdas, np.mean(rewards_lambda[:,-50:], axis=1), marker='o')
+    
+    data_l = rewards_lambda[:,-50:]
+    plt.plot(lambdas, np.mean(data_l, axis=1), marker='o')
+    ci = 1.96 * np.std(data_l, axis=1)/np.sqrt(data_l.shape[1])
+    plt.fill_between(lambdas, np.mean(data_l, axis=1)-ci, np.mean(data_l, axis=1)+ci, color='b', alpha=0.2)
     plt.xlabel('Lambda (Trace Decay Parameter)')
     plt.ylabel('Average Reward over last 50 Episodes')
     plt.title('Average Reward vs Lambda')

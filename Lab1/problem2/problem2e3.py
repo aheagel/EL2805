@@ -16,7 +16,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
     """
 
     if visits is None:
-        visits = np.zeros((100, 10)) # Discretized state space visits
+        visits = np.zeros((100, 100, 3)) # Discretized state space visits , (dx, dv, a)
     if eta is None:
         eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     if W is None:
@@ -43,7 +43,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
         return np.divide(l_rate, _eta, out=l_rate*np.ones_like(_eta), where=_eta!=0)[:, np.newaxis]
 
     def c2d(state: np.ndarray, _visits=visits):
-        return np.floor(state * np.array(_visits.shape)).astype(int)
+        return np.floor(state * np.array(_visits.shape[0:2])).astype(int)
     
     def UCB_policy(V, visit_counts, total_counts, c):
         ucb_values = V + c * np.sqrt(np.log(total_counts + 1) / (visit_counts + 1e-5))
@@ -64,9 +64,11 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
 
         current_state = scale_state_variables(env.reset()[0])
         current_value = Value(current_state, W, eta)
-        current_action = UCB_policy(current_value, visits[c2d(current_state)], np.sum(visits), c=curiosity(episode))
+
+        idx, idy = c2d(current_state)
+        current_action = UCB_policy(current_value, visits[idx, idy, :], np.sum(visits, axis=(0,1)), c=curiosity(episode))
         current_Q = current_value[current_action]
-        visits[c2d(current_state)] += 1
+        visits[idx, idy, current_action] += 1
 
         while not terminal:
             next_state, state_action_reward, done, truncated, _ = env.step(current_action)
@@ -75,10 +77,11 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
 
             next_state = scale_state_variables(next_state)
             next_value = Value(next_state, W, eta) # With current policy
-            next_action = UCB_policy(next_value, visits[c2d(next_state)], np.sum(visits), c=curiosity(episode))
-            next_Q = next_value[next_action]
-            visits[c2d(next_state)] += 1
 
+            idx, idy = c2d(next_state)
+            next_action = UCB_policy(next_value, visits[idx, idy, :], np.sum(visits, axis=(0,1)), c=curiosity(episode))
+            next_Q = next_value[next_action]
+            visits[idx, idy, next_action] += 1
 
             delta = TD_error(state_action_reward, terminal, current_Q, next_Q)
             z = np.clip(Eligibility_trace(z, current_state, current_action), -5, 5) # Update eligibility trace with clipping
@@ -106,11 +109,11 @@ eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For sma
 
 # Train SARSA with Fourier Basis
 W_learned, rewards = SARSA3_learning(env,
-                                        lamda=0.85,
+                                        lamda=0.9,
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
-                                        curiosity=lambda k: 0.0001,
+                                        curiosity=lambda k: 1,
                                         l_rate=0.0005,
                                         eta=eta,
                                         plot=True,
