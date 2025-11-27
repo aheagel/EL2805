@@ -8,15 +8,16 @@ import pickle
 from problem2 import running_average, scale_state_variables
 from problem2b import FourierBasis, Value, Nestrov_iteration
 
-def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, n_episodes=50, curiosity=None, l_rate=0.001, plot=False) -> tuple[np.ndarray, list]:
+def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, n_episodes=50, curiosity=None, l_rate=None, plot=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
     Returns:
     - Q: The learned Q-table.
     """
-
+    if l_rate is None:
+        l_rate = lambda k: 0.001  # Default learning rate
     if visits is None:
-        visits = np.zeros((100, 100, 3)) # Discretized state space visits , (dx, dv, a)
+        visits = np.zeros((20, 20, 3)) # Discretized state space visits , (dx, dv, a)
     if eta is None:
         eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     if W is None:
@@ -39,8 +40,8 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
 
         return _lamda * _discount * Zold + mask
     
-    def advanced_learning_rate(l_rate, _eta=normed_eta):
-        return np.divide(l_rate, _eta, out=l_rate*np.ones_like(_eta), where=_eta!=0)[:, np.newaxis]
+    def advanced_learning_rate(rate, _eta=normed_eta):
+        return np.divide(rate, _eta, out=rate*np.ones_like(_eta), where=_eta!=0)[:, np.newaxis]
 
     def c2d(state: np.ndarray, _visits=visits):
         return np.floor(state * np.array(_visits.shape[0:2])).astype(int)
@@ -66,7 +67,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
         current_value = Value(current_state, W, eta)
 
         idx, idy = c2d(current_state)
-        current_action = UCB_policy(current_value, visits[idx, idy, :], np.sum(visits, axis=(0,1)), c=curiosity(episode))
+        current_action = UCB_policy(current_value, visits[idx, idy, :], np.sum(visits, axis=(0,1,2)), c=curiosity(episode))
         current_Q = current_value[current_action]
         visits[idx, idy, current_action] += 1
 
@@ -79,16 +80,16 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
             next_value = Value(next_state, W, eta) # With current policy
 
             idx, idy = c2d(next_state)
-            next_action = UCB_policy(next_value, visits[idx, idy, :], np.sum(visits, axis=(0,1)), c=curiosity(episode))
+            next_action = UCB_policy(next_value, visits[idx, idy, :], np.sum(visits, axis=(0,1,2)), c=curiosity(episode))
             next_Q = next_value[next_action]
             visits[idx, idy, next_action] += 1
 
             delta = TD_error(state_action_reward, terminal, current_Q, next_Q)
             z = np.clip(Eligibility_trace(z, current_state, current_action), -5, 5) # Update eligibility trace with clipping
             
-            adv_rate = advanced_learning_rate(l_rate) # Decreasing learning rate NAIVE
+            adv_rate = advanced_learning_rate(l_rate(episode)) # Decreasing learning rate NAIVE
     
-            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, 0.1) # Update weights
+            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, 0.95) # Update weights
 
             current_state, current_action, current_value, current_Q = next_state, next_action, next_value, next_Q
 
@@ -100,7 +101,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
 env = gym.make('MountainCar-v0')
 env.reset()
 
-N_episodes = 400
+N_episodes = 10000
 p=2
 eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
 
@@ -113,8 +114,8 @@ W_learned, rewards = SARSA3_learning(env,
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
-                                        curiosity=lambda k: 1,
-                                        l_rate=0.0005,
+                                        curiosity=lambda k: 0.1,
+                                        l_rate=lambda k: 0.00005 * (0.992 ** k),
                                         eta=eta,
                                         plot=True,
                                     )
