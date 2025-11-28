@@ -6,20 +6,29 @@ import os
 import gymnasium as gym
 import pickle
 from problem2 import running_average, scale_state_variables
+from numba_utils import (
+    scale_state_numba,
+    fourier_basis_numba,
+    value_numba,
+    value_action_numba,
+    td_error_numba,
+    eligibility_trace_numba,
+    nesterov_iteration_numba,
+    epsilon_greedy_policy_numba,
+    advanced_learning_rate_numba
+)
 
 def FourierBasis(state: np.ndarray, eta: np.ndarray) -> np.ndarray:
-    return np.cos(np.pi * (eta.T @ state))
+    return fourier_basis_numba(state, eta)
 
 def Value(state, W, eta, action=None):
     if action is None:
-        return W.T @ FourierBasis(state, eta) 
+        return value_numba(state, W, eta)
     else:
-        return W[:, action].T @ FourierBasis(state, eta) # This is the Q-value for a specific action
-        
+        return value_action_numba(state, W, eta, action)
+
 def Nestrov_iteration(x, v, grad_x, learning_rate, momentum):
-    v_new = momentum * v + learning_rate * grad_x
-    x_new = x + momentum * v_new + learning_rate * grad_x
-    return x_new, v_new
+    return nesterov_iteration_numba(x, v, grad_x, learning_rate, momentum)
 
 def make_exponential_schedule(start: float, end: float, decay: float):
 	"""Create an exponential decay schedule that never drops below `end`."""
@@ -30,6 +39,17 @@ def make_exponential_schedule(start: float, end: float, decay: float):
 
 	return schedule
 
+def make_polynomial_schedule(start: float, end: float, scale: float, power: float):
+    """Create a polynomial (0,1] decay schedule """
+
+    def schedule(step: int) -> float:
+        decay_factor = (step / scale) ** power
+        value = start / decay_factor
+        return max(value, end)
+
+    return schedule
+
+
 def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=None, momentum=0.95, plot=False, debug=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
@@ -39,38 +59,29 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
 
     if l_rate is None:
         l_rate = lambda k: 0.001  # Default learning rate
+    elif not callable(l_rate):
+        val_lr = l_rate
+        l_rate = lambda k: val_lr
+
     if eta is None:
-        eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
+        eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)], dtype=np.float64).T # For small p this is doable
+    
+    # Ensure eta is float64 for Numba compatibility
+    eta = eta.astype(np.float64)
+
     if W is None:
         W = np.zeros((eta.shape[1], int(env.action_space.n)))  # Random initialization of weights
     if eps is None:
         eps = lambda k: 0.1  # Default epsilon value
+    elif not callable(eps):
+        val_eps = eps
+        eps = lambda k: val_eps
 
     normed_eta = np.linalg.norm(eta, ord=2, axis=0) # Normalize learning rate
     episode_reward_list = []  # Used to save episodes reward
-
-    def epsilon_greedy_policy(V, eps):
-        if np.random.rand() < eps:
-            action = np.random.randint(len(V))  # Explore: random action
-        else:
-            best = np.flatnonzero(V == V.max())
-            action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
-        return action 
     
-    def TD_error(reward, terminal, Q_current, Q_next, _discount=discount):
-        if terminal:
-            return reward - Q_current
-        else:
-            return reward + _discount * Q_next - Q_current
-        
-    def Eligibility_trace(Zold, current_state, current_action, _lamda=lamda, _discount=discount, _eta=eta):
-        mask = np.zeros_like(Zold)
-        mask[:, current_action] = FourierBasis(current_state, _eta) # Grad term
-
-        return _lamda * _discount * Zold + mask
-    
-    def advanced_learning_rate(l_rate, _eta=normed_eta):
-        return np.divide(l_rate, _eta, out=l_rate*np.ones_like(_eta), where=_eta!=0)[:, np.newaxis]
+    low = env.observation_space.low
+    high = env.observation_space.high
 
     for episode in tqdm(range(1, n_episodes+1), disable=debug):
         # Switch to rendering for the last episode
@@ -83,10 +94,14 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
         z = np.zeros_like(W)  # Eligibility trace initialization
         terminal = False
 
-        current_state = scale_state_variables(env.reset()[0])
-        current_value = Value(current_state, W, eta)
+        # Pre calculations
+        _lrate = l_rate(episode)
+        _eps = eps(episode)
 
-        current_action = epsilon_greedy_policy(current_value, eps(episode))
+        current_state = scale_state_numba(env.reset()[0].astype(np.float64), low, high)
+        current_value = value_numba(current_state, W, eta)
+
+        current_action = epsilon_greedy_policy_numba(current_value, _eps)
         current_Q = current_value[current_action]
 
         while not terminal:
@@ -94,23 +109,24 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
             reward += float(state_action_reward)
             terminal = done or truncated
 
-            next_state = scale_state_variables(next_state)
-            next_value = Value(next_state, W, eta) # With current policy
-            next_action = epsilon_greedy_policy(next_value, eps(episode))
+            next_state = scale_state_numba(next_state.astype(np.float64), low, high)
+            next_value = value_numba(next_state, W, eta) # With current policy
+            next_action = epsilon_greedy_policy_numba(next_value, _eps)
             next_Q = next_value[next_action]
 
 
-            delta = TD_error(state_action_reward, terminal, current_Q, next_Q)
-            z = np.clip(Eligibility_trace(z, current_state, current_action), -5, 5) # Update eligibility trace with clipping
+            delta = td_error_numba(state_action_reward, terminal, current_Q, next_Q, discount)
+            z = eligibility_trace_numba(z, current_state, current_action, lamda, discount, eta)
+            z = np.clip(z, -5, 5) # Update eligibility trace with clipping
             
-            adv_rate = advanced_learning_rate(l_rate(episode)) # Decreasing learning rate NAIVE
+            adv_rate = advanced_learning_rate_numba(_lrate, normed_eta) # Decreasing learning rate NAIVE
     
-            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, momentum) # Update weights
+            W, v = nesterov_iteration_numba(W, v, delta * z, adv_rate, momentum) # Update weights
 
             current_state, current_action, current_value, current_Q = next_state, next_action, next_value, next_Q
 
         episode_reward_list.append(reward)
-        env.reset()
+        # env.reset() # Removed redundant reset
 
     return W, episode_reward_list
 
@@ -120,13 +136,12 @@ if __name__ == "__main__":
     env = gym.make('MountainCar-v0')
     env.reset()
     
-    params={'lambda': 0.639258932552459, 'eps_start': 0.2720383791813542, 'eps_decay': 0.9614676675456754, 'lr_initial': 0.0031520485197951836, 'lr_end': 6.307327017374587e-10, 'lr_decay': 0.9974346917025482, 'momentum': 0.03041873977316626}
     N_episodes = 200
     p=2
-    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
-    
+    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)], dtype=np.float64).T # For small p this is doable
+    params={'lambda': 0.8540592523120906, 'momentum': 0.9983674411507302, 'lr_initial': 6.644641407969861e-05, 'lr_scale': 21.477703280373976, 'lr_power': 0.6740471797607481, 'eps_start': 0.0021543255282344886, 'eps_decay': 0.9337869414588281}
     epsilon_schedule = make_exponential_schedule(params['eps_start'], 0, params['eps_decay'])
-    learning_rate_schedule = make_exponential_schedule(params['lr_initial'], params['lr_end'], params['lr_decay'])
+    learning_rate_schedule = make_polynomial_schedule(params['lr_initial'], 0, params['lr_scale'], params['lr_power'])
     #eta = eta[:, 1:]
     #print(eta) For plot later
 
