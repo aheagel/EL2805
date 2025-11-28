@@ -6,37 +6,46 @@ import os
 import gymnasium as gym
 import pickle
 from problem2 import running_average
-from problem2b import SARSA2_learning
+from problem2b import make_exponential_schedule, make_polynomial_schedule
+from problem2e3 import SARSA3_learning
 
-# Import and initialize Mountain Car Environment
-env = gym.make('MountainCar-v0')
-env.reset()
+if __name__ == "__main__":
+    # Import and initialize Mountain Car Environment
+    env = gym.make('MountainCar-v0')
+    env.reset()
 
-N_episodes = 400
-p=2
-eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
+    # 1. PARAMETERS FOR FAST CONVERGENCE
+    N_episodes = 200  # Stick to teacher's limit
+    p = 2
+    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)], dtype=np.float64).T 
+    
+    params={'lambda': 0.9462001379527284, 'momentum': 0.8149743131779319, 'lr_initial': 0.002501651424747113, 'lr_scale': 1.2503832722688262, 'lr_power': 0.9489490185683979, 'curiosity_start': 1.9452404547124045, 'curiosity_decay': 0.979474624065298}
+    learning_rate_schedule = make_polynomial_schedule(params['lr_initial'], 0, params['lr_scale'], params['lr_power'])
+    curiosity_schedule =make_exponential_schedule(params['curiosity_start'], 0, params['curiosity_decay'])
 
-# Train SARSA with Fourier Basis
-W_learned, rewards =    SARSA2_learning(env,
-                                        lamda=0.85,
+    print(f"Training SARSA with Fourier Order p={p}...")
+    W_learned, rewards = SARSA3_learning(env,
+                                        lamda=params['lambda'],       # High trace decay for faster credit assignment
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
-                                        eps=lambda k: (100-k)/100 if k < 100 else 0.0,
-                                        l_rate=0.0005,
+                                        curiosity=curiosity_schedule,  # Decreasing exploration
+                                        l_rate=learning_rate_schedule,          # Slightly higher learning rate
                                         eta=eta,
-                                        plot=True)
+                                        plot=True,        # Render last episode
+                                        momentum=params['momentum']
+                                        )
 
-# Plot Rewards plot 1
-plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
-plt.plot([i for i in range(1, N_episodes+1)], running_average(rewards, 50), label='Average episode reward')
-plt.xlabel('Episodes')
-plt.ylabel('Total reward')
-plt.title('Total Reward vs Episodes')
-plt.legend()
-plt.grid(alpha=0.3)
-plt.show()
-env.render()
-env.close()
+    # Plot Rewards plot 1
+    plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
+    plt.plot([i for i in range(1, N_episodes+1)], running_average(rewards, 50), label='Average episode reward')
+    plt.xlabel('Episodes')
+    plt.ylabel('Total reward')
+    plt.title('Total Reward vs Episodes')
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.show()
+    env.close()
 
-#pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    exec(open(os.path.join(sys.path[0], 'check_solution.py')).read())

@@ -5,18 +5,9 @@ import sys
 import os
 import gymnasium as gym
 import pickle
-from problem2 import running_average, scale_state_variables
-from problem2b import FourierBasis, Value, Nestrov_iteration, make_exponential_schedule, make_polynomial_schedule
-from numba_utils import (
-    scale_state_numba,
-    value_numba,
-    td_error_numba,
-    eligibility_trace_numba,
-    nesterov_iteration_numba,
-    advanced_learning_rate_numba,
-    c2d_numba,
-    ucb_policy_numba
-)
+from problem2 import running_average
+from problem2b import make_exponential_schedule, make_polynomial_schedule
+from numba_utils import *
 
 def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, n_episodes=50, curiosity=None, l_rate=None, momentum=0.95, plot=False, debug=False) -> tuple[np.ndarray, list]:
     """
