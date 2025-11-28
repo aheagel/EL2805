@@ -21,14 +21,24 @@ def Nestrov_iteration(x, v, grad_x, learning_rate, momentum):
     x_new = x + momentum * v_new + learning_rate * grad_x
     return x_new, v_new
 
-def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=0.001, plot=False) -> tuple[np.ndarray, list]:
+def make_exponential_schedule(start: float, end: float, decay: float):
+	"""Create an exponential decay schedule that never drops below `end`."""
+
+	def schedule(step: int) -> float:
+		value = start * (decay ** max(step - 1, 0))
+		return max(value, end)
+
+	return schedule
+
+def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50, eps=None, l_rate=None, momentum=0.95, plot=False, debug=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
     Returns:
     - Q: The learned Q-table.
     """
 
-    
+    if l_rate is None:
+        l_rate = lambda k: 0.001  # Default learning rate
     if eta is None:
         eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     if W is None:
@@ -62,7 +72,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
     def advanced_learning_rate(l_rate, _eta=normed_eta):
         return np.divide(l_rate, _eta, out=l_rate*np.ones_like(_eta), where=_eta!=0)[:, np.newaxis]
 
-    for episode in tqdm(range(1, n_episodes+1)):
+    for episode in tqdm(range(1, n_episodes+1), disable=debug):
         # Switch to rendering for the last episode
         if episode == n_episodes and plot:
             env.close()
@@ -93,13 +103,14 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
             delta = TD_error(state_action_reward, terminal, current_Q, next_Q)
             z = np.clip(Eligibility_trace(z, current_state, current_action), -5, 5) # Update eligibility trace with clipping
             
-            adv_rate = advanced_learning_rate(l_rate) # Decreasing learning rate NAIVE
+            adv_rate = advanced_learning_rate(l_rate(episode)) # Decreasing learning rate NAIVE
     
-            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, 0.1) # Update weights
+            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, momentum) # Update weights
 
             current_state, current_action, current_value, current_Q = next_state, next_action, next_value, next_Q
 
         episode_reward_list.append(reward)
+        env.reset()
 
     return W, episode_reward_list
 
@@ -109,22 +120,26 @@ if __name__ == "__main__":
     env = gym.make('MountainCar-v0')
     env.reset()
     
-    N_episodes = 400
+    params={'lambda': 0.639258932552459, 'eps_start': 0.2720383791813542, 'eps_decay': 0.9614676675456754, 'lr_initial': 0.0031520485197951836, 'lr_end': 6.307327017374587e-10, 'lr_decay': 0.9974346917025482, 'momentum': 0.03041873977316626}
+    N_episodes = 200
     p=2
     eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     
+    epsilon_schedule = make_exponential_schedule(params['eps_start'], 0, params['eps_decay'])
+    learning_rate_schedule = make_exponential_schedule(params['lr_initial'], params['lr_end'], params['lr_decay'])
     #eta = eta[:, 1:]
     #print(eta) For plot later
 
     # Train SARSA with Fourier Basis
     W_learned, rewards = SARSA2_learning(env,
-                                         lamda=0.9,
+                                         lamda=params['lambda'],
                                          discount=1,
                                          p=p,
                                          n_episodes=N_episodes,
-                                         eps=lambda k: 0.0,
-                                         l_rate=0.0005,
+                                         eps=lambda k: epsilon_schedule(k),
+                                         l_rate=lambda k: learning_rate_schedule(k),
                                          eta=eta,
+                                         momentum=params['momentum'],
                                          plot=True)
 
     # Plot Rewards plot 1
@@ -138,4 +153,5 @@ if __name__ == "__main__":
     plt.show()
     env.close()
 
-    #pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    exec(open(os.path.join(sys.path[0], 'check_solution.py')).read())

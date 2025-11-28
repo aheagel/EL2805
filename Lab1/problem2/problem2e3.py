@@ -6,9 +6,9 @@ import os
 import gymnasium as gym
 import pickle
 from problem2 import running_average, scale_state_variables
-from problem2b import FourierBasis, Value, Nestrov_iteration
+from problem2b import FourierBasis, Value, Nestrov_iteration, make_exponential_schedule
 
-def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, n_episodes=50, curiosity=None, l_rate=None, plot=False) -> tuple[np.ndarray, list]:
+def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, n_episodes=50, curiosity=None, l_rate=None, momentum=0.95, plot=False, debug=False) -> tuple[np.ndarray, list]:
     """
     SARSA2-learning algorithm for the advanced maze environment.
     Returns:
@@ -52,7 +52,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
         action = np.random.choice(best)  # Exploit: best action from Q-table with random tie-breaking
         return action
     
-    for episode in tqdm(range(1, n_episodes+1)):
+    for episode in tqdm(range(1, n_episodes+1), disable=debug):
         # Switch to rendering for the last episode
         if episode == n_episodes and plot:
             env.close()
@@ -89,7 +89,7 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
             
             adv_rate = advanced_learning_rate(l_rate(episode)) # Decreasing learning rate NAIVE
     
-            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, 0.95) # Update weights
+            W, v = Nestrov_iteration(W, v, delta * z, adv_rate, momentum) # Update weights
 
             current_state, current_action, current_value, current_Q = next_state, next_action, next_value, next_Q
 
@@ -97,38 +97,43 @@ def SARSA3_learning(env, lamda, visits=None, discount=1, W=None, p=2, eta=None, 
 
     return W, episode_reward_list
 
-# Import and initialize Mountain Car Environment
-env = gym.make('MountainCar-v0')
-env.reset()
+if __name__ == "__main__":
+    # Import and initialize Mountain Car Environment
+    env = gym.make('MountainCar-v0')
+    env.reset()
 
-N_episodes = 10000
-p=2
-eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
+    # 1. PARAMETERS FOR FAST CONVERGENCE
+    N_episodes = 200  # Stick to teacher's limit
+    p = 2
+    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T 
 
-#eta = eta[:, 1:]
-#print(eta) For plot later
+    params={'lambda': 0.7493192913828697, 'lr_initial': 0.0027325349192143084, 'lr_decay': 0.9545766479121087, 'momentum': 0.5057140558849098, 'curiosity_start': 3.462430164865801, 'curiosity_decay': 0.985152028147218}
+    learning_rate_schedule = make_exponential_schedule(params['lr_initial'], 0, params['lr_decay'])
+    curiosity_schedule = make_exponential_schedule(params['curiosity_start'], 0, params['curiosity_decay'])
 
-# Train SARSA with Fourier Basis
-W_learned, rewards = SARSA3_learning(env,
-                                        lamda=0.9,
+    print(f"Training SARSA with Fourier Order p={p}...")
+    W_learned, rewards = SARSA3_learning(env,
+                                        lamda=params['lambda'],       # High trace decay for faster credit assignment
                                         discount=1,
                                         p=p,
                                         n_episodes=N_episodes,
-                                        curiosity=lambda k: 0.1,
-                                        l_rate=lambda k: 0.00005 * (0.992 ** k),
+                                        curiosity=curiosity_schedule,  # Decreasing exploration
+                                        l_rate=learning_rate_schedule,          # Slightly higher learning rate
                                         eta=eta,
-                                        plot=True,
-                                    )
+                                        plot=True,        # Render last episode
+                                        momentum=params['momentum']
+                                        )
 
-# Plot Rewards plot 1
-plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
-plt.plot([i for i in range(1, N_episodes+1)], running_average(rewards, 50), label='Average episode reward')
-plt.xlabel('Episodes')
-plt.ylabel('Total reward')
-plt.title('Total Reward vs Episodes')
-plt.legend()
-plt.grid(alpha=0.3)
-plt.show()
-env.close()
+    # Plot Rewards plot 1
+    plt.plot([i for i in range(1, N_episodes+1)], rewards, label='Episode reward')
+    plt.plot([i for i in range(1, N_episodes+1)], running_average(rewards, 50), label='Average episode reward')
+    plt.xlabel('Episodes')
+    plt.ylabel('Total reward')
+    plt.title('Total Reward vs Episodes')
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.show()
+    env.close()
 
-#pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    exec(open(os.path.join(sys.path[0], 'check_solution.py')).read())
