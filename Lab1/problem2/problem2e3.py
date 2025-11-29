@@ -109,7 +109,7 @@ if __name__ == "__main__":
     
     params={'lambda': 0.9462001379527284, 'momentum': 0.8149743131779319, 'lr_initial': 0.002501651424747113, 'lr_scale': 1.2503832722688262, 'lr_power': 0.9489490185683979, 'curiosity_start': 1.9452404547124045, 'curiosity_decay': 0.979474624065298}
     learning_rate_schedule = make_polynomial_schedule(params['lr_initial'], 0, params['lr_scale'], params['lr_power'])
-    curiosity_schedule =make_exponential_schedule(params['curiosity_start'], 0, params['curiosity_decay'])
+    curiosity_schedule = make_exponential_schedule(params['curiosity_start'], 0, params['curiosity_decay'])
 
     print(f"Training SARSA with Fourier Order p={p}...")
     W_learned, rewards = SARSA3_learning(env,

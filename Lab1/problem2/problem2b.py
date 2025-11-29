@@ -5,18 +5,8 @@ import sys
 import os
 import gymnasium as gym
 import pickle
-from problem2 import running_average, scale_state_variables
-from numba_utils import (
-    scale_state_numba,
-    fourier_basis_numba,
-    value_numba,
-    value_action_numba,
-    td_error_numba,
-    eligibility_trace_numba,
-    nesterov_iteration_numba,
-    epsilon_greedy_policy_numba,
-    advanced_learning_rate_numba
-)
+from problem2 import running_average
+from numba_utils import *
 
 def FourierBasis(state: np.ndarray, eta: np.ndarray) -> np.ndarray:
     return fourier_basis_numba(state, eta)
@@ -64,7 +54,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
         l_rate = lambda k: val_lr
 
     if eta is None:
-        eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)], dtype=np.float64).T # For small p this is doable
+        eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     
     # Ensure eta is float64 for Numba compatibility
     eta = eta.astype(np.float64)
@@ -138,7 +128,7 @@ if __name__ == "__main__":
     
     N_episodes = 200
     p=2
-    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)], dtype=np.float64).T # For small p this is doable
+    eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T # For small p this is doable
     params={'lambda': 0.8540592523120906, 'momentum': 0.9983674411507302, 'lr_initial': 6.644641407969861e-05, 'lr_scale': 21.477703280373976, 'lr_power': 0.6740471797607481, 'eps_start': 0.0021543255282344886, 'eps_decay': 0.9337869414588281}
     epsilon_schedule = make_exponential_schedule(params['eps_start'], 0, params['eps_decay'])
     learning_rate_schedule = make_polynomial_schedule(params['lr_initial'], 0, params['lr_scale'], params['lr_power'])

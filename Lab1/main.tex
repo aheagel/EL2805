@@ -1,0 +1,86 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{pdflscape}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algcompatible}
+\usepackage{algpseudocode}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amstext}
+\usepackage{amsthm}
+\usepackage{systeme}
+\usepackage{setspace}
+\usepackage{animate}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xr}
+\usetikzlibrary{positioning, arrows.meta}
+\usepackage[a4paper, margin=1.2in, total={6in, 9in}]{geometry}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{subfiles}
+\definecolor{cornflowerblue}{HTML}{6495ED}
+\setlength{\parindent}{0pt}       % Ingen indragning
+\setlength{\parskip}{0.5\baselineskip} % 80% av radavståndet mellan stycken
+
+
+
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+KTH Royal Institute of Technology\\
+Course: EL2805 - Reinforcement Learning \\
+\begin{align*}
+    \text{Saga Tran} &\mid 19991105-2182 \\
+\text{Anh Do} &\mid 20020416-2317
+\end{align*}
+
+\vspace{200pt}
+\huge Computer Lab 1\\
+\vspace{20pt}
+\large
+
+\vspace{210pt}
+\large 
+Date: 2025/12/05 18.00 \\
+\end{center}
+\end{titlepage}
+\clearpage
+
+\section*{Problem 1}
+\subsection*{Basic Maze}
+\subsubsection*{(a)}
+
+\subsubsection*{(b)}
+Yes, introducing for the possibility of the minotaur to stand still makes the problem more difficult. This is because the agent now has to take into account the additional action of the minotaur, which increases the complexity of predicting its movements and planning a safe path to the goal. For this problem aswell is it clear that we will never be eaten as long as we move as there is an even step between us but allowing the minotaur to stand still would break this parity, which would make finding an optimal policy harder for the model as now standing still could be optimal in the extended problem.
+\subsection*{Dynamic Programming}
+\subsubsection*{(c)}
+\subsubsection*{(d)}
+\subsection*{Value Iteration}
+\subsubsection*{(e)}
+\subsubsection*{(f)}
+\subsection*{Additional questions}
+\subsubsection*{(g)}
+\subsubsection*{(h)}
+\subsection*{Q-Learning and Sarsa}
+\subsubsection*{(i) BOUNS}
+\subsubsection*{(j) BOUNS}
+\subsubsection*{(k) BOUNS}
+
+\clearpage
+\newpage
+\section*{Problem 2}
+\subsubsection*{(a)}
+\subsubsection*{(b)}
+\subsubsection*{(c)}
+\subsubsection*{(d)}
+\subsubsection*{(e)}
+\subsubsection*{(f)}
+\end{document}
