@@ -84,15 +84,16 @@ if __name__ == "__main__":
 
     V_star, _ = value_iteration(env, discount, 1e-12)
 
-    itera = 50000
+    itera = 200000
     alpha0 = ('power', 1, 0.51)
     alpha1 = ('power', 1, 2/3)
-    epps = ('constant', 0.2)
+    epps0 = ('constant', 0.2)
+    epps1 = ('constant', 0.1)
     
-    Q_start = np.random.rand(env.n_states, env.n_actions)
+    Q_start = np.ones((env.n_states, env.n_actions))
     
-    Q0, number_of_visits0, v_start0 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha0, epsilon_func=epps, Q=Q_start.copy())
-    Q1, number_of_visits1, v_start1 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha1, epsilon_func=epps, Q=Q_start.copy())
+    Q0, number_of_visits0, v_start0 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha0, epsilon_func=epps1, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha1, epsilon_func=epps1, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
 
@@ -104,13 +105,13 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(n) = n^{-0.51}$', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
-    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(n) = n^{-2/3}$', marker='x', markersize=4, markevery=10000, linewidth=1)
-    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]:.4f}')
-
+    plt.plot(np.arange(1,itera+1), v_start0, label=r'$\alpha(k) = 0.51$' + f' Latest Reward {v_start0[-1]}', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,itera+1), v_start1, label=r'$\alpha(k) = 2/3$' + f' Latest Reward {v_start1[-1]}', marker='x', markersize=4, markevery=10000, linewidth=1)
+    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation (Value Iteration) {V_star[env.map[start]]}')
+    plt.axvline(x=50000, color='b', linestyle=':', label='50000 Iterations')
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')
-    plt.title('Convergence of Q-Learning with different alpha')
+    plt.title(r'Convergence of Q-Learning with different $\alpha$ and $\epsilon=0.1$')
     plt.legend()
     plt.grid(True)
     plt.show()

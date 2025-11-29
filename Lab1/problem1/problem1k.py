@@ -1,6 +1,6 @@
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from problem1i import Q_learning
+from Lab1.problem1.problem1i2 import Q_learning
 from problem1j import SARSA_learning
 from problem1h import MazeAdvanced
 from maze import *

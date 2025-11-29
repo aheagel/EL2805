@@ -207,12 +207,26 @@ Date: 2025/12/05 18.00 \\
         
         \begin{figure}[H]
             \centering
-            \includegraphics[width=0.6\textwidth]{figures/1e.png}
+            \includegraphics[width=0.8\textwidth]{figures/1e.png}
             \caption{Optimal policy for the basic maze with poison using Value Iteration. The green circle indicates the starting position of the player, while the red cross marks the Minotaur's starting position. The blue triangle points to the exit point B.}
             \label{fig:problem1e}
         \end{figure}
+
+        As shown in Figure \ref{fig:problem1e}, the Value Iteration algorithm successfully computes the optimal policy for the environment with poison. 
+        We observe that the agent now strictly follows the most direct path to the exit, minimizing the number of steps taken to reduce the cumulative risk of succumbing to the poison.
+        This behavior is quantitatively supported by the computed Value function at the start state when $t=0$, which is $0.6014$. 
+        This aligns with the theoretical survival probability for the minimum required
         
         \subsubsection{(f)}
+
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.8\textwidth]{figures/1f.png}
+            \caption{Estimated survival probability vs. number of iterations using Value Iteration and Monte Carlo simulation (cumulative sum averaging). The dashed lines represent the theoretical survival probabilities derived from the value function and direct calculation.}
+            \label{fig:problem1f}
+        \end{figure}
+
+        We can clearly see that this simulation estimate converges to the value function result of $0.6014$, which confirms that our Value Iteration implementation is correct and that the derived optimal policy effectively maximizes the probability of exiting the maze alive.
 
     \subsection{Additional questions}
         \subsubsection{(g)}
@@ -225,7 +239,7 @@ Date: 2025/12/05 18.00 \\
                 
                 \item \textbf{Off-policy methods} (e.g., Q-learning) estimate the value of an optimal target policy independently of the agent's actions. The update rule uses the best possible next action:
                 \[ Q(s, a) \leftarrow Q(s, a) + \alpha [r + \gamma \max_{a'} Q(s', a') - Q(s, a)] \]
-                This allows the agent to learn an optimal strategy even while exploring randomly, which means $a'$ is chosen greedely instead and not by the current policy.
+                This allows the agent to learn an optimal strategy even while exploring randomly, which means $a'$ is chosen greedily instead and not by the current policy.
             \end{itemize}
 
             \myparagraph{Convergence Conditions}
@@ -238,43 +252,158 @@ Date: 2025/12/05 18.00 \\
                 \item \textbf{SARSA (On-policy)} Requires all state-action pairs must be visited infinitely often, and the policy must become greedy in the limit (e.g., $\epsilon \to 0$).
                 \item \textbf{Q-learning (Off-policy)} Requires only that all state-action pairs are visited infinitely often. The behavior policy does not need to become greedy.
             \end{itemize}
-
-    \subsubsection{(h)}
+    
+        \subsubsection{(h)}
         To accommodate the new requirements (keys, smarter Minotaur, and poison), we modify the MDP tuple $(\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$ as follows:
 
-        \myparagraph{State Space Expansion} 
-        We introduce a binary variable $k \in \{0, 1\}$ to track possession of the keys. 
-        The new state is $s = (p, m, k)$, where $p$ is the player's position, $m$ is the Minotaur's position, and $k=1$ implies the key has been retrieved from C.
-        We also need to modify the winning state to require the key aswell as not being eaten:
-        \begin{equation}
-            s_{win} = \{ (p, m, k) \in \mathcal{S} \mid p = B, k = 1, m \neq B \}
-        \end{equation}
+            \myparagraph{State Space Expansion} 
+            We introduce a binary variable $k \in \{0, 1\}$ to track possession of the keys. 
+            The new state is $s = (p, m, k)$, where $p$ is the player's position, $m$ is the Minotaur's position, and $k=1$ implies the key has been retrieved from C.
+            We also need to modify the winning state to require the key aswell as not being eaten:
+            \begin{equation}
+                s_{win} = \{ (p, m, k) \in \mathcal{S} \mid p = B, m \neq B, k = 1 \}
+            \end{equation}
 
-        \myparagraph{Discount Factor (Poison)} 
-        To model the geometric life expectancy of 50 steps, we set the discount factor $\gamma$ to the survival probability:
-        \begin{equation}
-            \gamma = 1 - \frac{1}{50} = \frac{49}{50} = 0.98
-        \end{equation}
+            \myparagraph{Discount Factor (Poison)} 
+            To model the geometric life expectancy of 50 steps, we set the discount factor $\gamma$ to the survival probability:
+            \begin{equation}
+                \gamma = 1 - \frac{1}{50} = \frac{49}{50} = 0.98
+            \end{equation}
 
+            \myparagraph{Transition Probabilities} 
+            The transition $P(s_{t+1}|s_t,a_t)$ now accounts for the Minotaur's aggressive behavior. 
+            Let $\mathcal{N}(m_t)$ be the set of valid neighbors for the Minotaur. 
+            Let $\mathcal{N}^*(m_t, p_t) \subset \mathcal{N}(m_t)$ be the subset of neighbors that minimizes the Manhattan distance to the player $p_t$, which is given by:
+            \begin{equation}
+                m_{t+1} \in \mathcal{N}^*(m_t, p_t), \quad d(m_{t+1}, p_t) = \min_{m \in \mathcal{N}(m_t)} d(m, p_t)
+            \end{equation}
+            
+            The probability of the Minotaur moving to a specific neighbor $m' \in \mathcal{N}(m)$ is given by:
+            \begin{equation}
+                P(m_{t+1} \mid m_t, p_t) = \frac{0.65}{|\mathcal{N}(m_t)|} + \mathbb{I}(m_{t+1} \in \mathcal{N}^*(m_t, p_t)) \cdot \frac{0.35}{|\mathcal{N}^*(m_t, p_t)|}
+            \end{equation}
+            Here, the first term represents the random behavior (uniform over all directions), and the second term adds probability mass to the optimal "chasing" moves. 
+            
+            The key transitions to 1 deterministically as long as $s = (p = C, m \neq C, k = 0)$ for the rest it is inherited from the previous state:
+            \begin{equation}
+                k_{t+1} = 
+                \begin{cases} 
+                    1 & \text{if } p_t = C, \, m_t \neq C, \, k_t = 0 \\
+                    k_t & \text{otherwise}
+                \end{cases}
+                \label{eq:KeyTransition}
+            \end{equation}
 
-        \myparagraph{Transition Probabilities} 
-        The transition $P(s_{t+1}|s_t,a_t)$ now accounts for the Minotaur's aggressive behavior. 
-        Let $\mathcal{N}(m_t)$ be the set of valid neighbors for the Minotaur. 
-        Let $\mathcal{N}^*(m_t, p_t) \subset \mathcal{N}(m_t)$ be the subset of neighbors that minimizes the Manhattan distance to the player $p_t$, which is given by:
-        \begin{equation}
-            m_{t+1} \in \mathcal{N}^*(m_t, p_t), \quad d(m_{t+1}, p_t) = \min_{m \in \mathcal{N}(m_t)} d(m, p_t)
-        \end{equation}
-        
-        The probability of the Minotaur moving to a specific neighbor $m' \in \mathcal{N}(m)$ is given by:
-        \begin{equation}
-            P(m_{t+1} \mid m_t, p_t) = \frac{0.65}{|\mathcal{N}(m_t)|} + \mathbb{I}(m_{t+1} \in \mathcal{N}^*(m_t, p_t)) \cdot \frac{0.35}{|\mathcal{N}^*(m_t, p_t)|}
-        \end{equation}
-        Here, the first term represents the random behavior (uniform over all directions), and the second term adds probability mass to the optimal "chasing" moves. 
-        The key state $k$ transitions to 1 deterministically as long as $s_t = (p_{t} = C, m, k = 0)$ and .
+            \myparagraph{Reward Expansion}
+            Although not explicitly needed, expanding the rewards to include key retrieval could help convergence. However, to keep in line with the reward structure in \ref{RewardFunctionBasic}, we simply set this term to 0.
 
     \subsection{Q-Learning and Sarsa}
         \subsubsection{(i) BOUNS}
+            \myparagraph{1)}
+            \begin{algorithm}
+            \caption{Q-learning for Advanced Maze}
+            \begin{algorithmic}[1]
+            \Require Environment $\mathcal{E}$, Start State $s_{start}$, Discount $\gamma$, Episodes $K$
+            \State Initialize $Q(s, a) \sim U(0,1)$ for all $s \in \mathcal{S}, a \in \mathcal{A}$
+            \State Set $Q(\text{absorbing}, \cdot) \gets 0$
+            \State Initialize visit counters $N(s, a) \gets 0$ for all $s, a$
+            \State Initialize array $V_{starts}$ of size $K$
 
+            \For{episode $k = 1, 2, \dots, K$}
+                \State $s \gets s_{start}$
+                \State $\varepsilon \gets \epsilon(k)$ \Comment{Get current exploration rate}
+                
+                \While{$s$ is not absorbing}
+                    \State \textbf{Select action} $a$:
+                    \If{$\text{random}() < \varepsilon$}
+                        \State $a \gets \text{random action from } \mathcal{A}$
+                    \Else
+                        \State $a \gets \arg\max_{a'} Q(s, a')$
+                    \EndIf
+                    
+                    \State \textbf{Observe} reward $r(s,a)$ and next state $s'$
+                    \State $N(s, a) \gets N(s, a) + 1$
+                    \State $\alpha \gets \text{learning\_rate}(N(s, a))$
+                    
+                    \State \textbf{Update Q-value}:
+                    \State $Q(s, a) \gets Q(s, a) + \alpha \cdot \left( r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right)$
+                    
+                    \State $s \gets s'$
+                \EndWhile
+                \State $V_{starts}[k] \gets \max_{a} Q(s_{start}, a)$
+            \EndFor
+            \State \Return $Q, N, V_{starts}$
+            \end{algorithmic}
+            \end{algorithm}
+
+            \myparagraph{2)}
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i2Zero.png}
+                    \caption{Q initialized to zero}
+                    \label{fig:problem1i2Zero}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i2Ones.png}
+                    \caption{Q initialized to one}
+                    \label{fig:problem1i2Ones}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.8\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i2Rand.png}
+                    \caption{Q initialized uniformly}
+                    \label{fig:problem1i2Rand}
+                \end{subfigure}
+                \caption{Convergence of the value function for different $Q$-table initializations with diffrent $\epsilon$, where $\alpha=2/3$.}
+                \label{fig:problem1i2}
+            \end{figure}
+            
+            It is evident from Figure \ref{fig:problem1i2} that initializing the $Q$-table uniformly between 0 and 1 leads to the fastest convergence of the value function at the start state. 
+            Random initialization within a reasonable bound encourages exploration by introducing stochastic optimism, as some values start high by chance without being uniformly overly optimistic. 
+            This allows the model to converge faster than when initialized to all ones, where the agent must systematically lower the $Q$-values for almost every state-action pair, requiring significantly more updates. 
+            Conversely, initializing to zero results in a pessimistic model that relies entirely on the $\epsilon$-greedy mechanism for exploration, failing to naturally incentivize visiting unknown states and in this case not even converging within the definied episodes.
+
+            We can also observe that a higher $\epsilon$ (more exploration) generally leads slower convergence across all initializations. 
+            This is because excessive exploration prevents the agent from sufficiently exploiting learned knowledge to refine the $Q$-values.
+            
+            \myparagraph{3}
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i3Zero.png}
+                    \caption{Q initialized to zero}
+                    \label{fig:problem1i3Zero}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i3Ones.png}
+                    \caption{Q initialized to one}
+                    \label{fig:problem1i3Ones}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.8\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1i3Rand.png}
+                    \caption{Q initialized uniformly}
+                    \label{fig:problem1i3Rand}
+                \end{subfigure}
+                \caption{Convergence of the value function for different $Q$-table initializations with different $\alpha$ where $\epsilon=0.1$.}
+                \label{fig:problem1i3}
+            \end{figure}
+            Figure \ref{fig:problem1i3} confirms that uniform random initialization yields the fastest convergence. 
+            We observe that a learning rate parameter of $\alpha = 0.51$ outperforms $\alpha = 2/3$, as the latter decays too quickly to sustain learning. 
+            Optimistic initialization (to one) performs better here than in previous experiments because the high initial learning rate rapidly corrects the over-estimated values. 
+            Although the random initialization suffers a slight initial over-correction, it ultimately achieves higher precision (5 correct decimals vs. 4) after 200,000 episodes. 
+            
+            Note that the episode count was increased to 200,000 to highlight these asymptotic differences.
+        
         \subsubsection{(j) BOUNS}
 
         \subsubsection{(k) BOUNS}
