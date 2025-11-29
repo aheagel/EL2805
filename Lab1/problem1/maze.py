@@ -5,7 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Qt5Agg') # use when windows 
+# matplotlib.use('Qt5Agg') # use when windows 
 import time
 from IPython import display
 
@@ -44,7 +44,6 @@ class Maze:
     GOAL_REWARD         = 1          #TODO
     IMPOSSIBLE_REWARD   = 0#-0.2          #TODO
     MINOTAUR_REWARD     = 0#-10         #TODO
-
     def __init__(self, maze, still_minotaur=False):
         """ Constructor of the environment Maze.
         """
@@ -396,7 +395,7 @@ def animate_solution2(maze, path):
     # Find terminal state index
     terminal_idx = len(path)
     for i, state in enumerate(path):
-        if state == 'Eaten' or state == 'Win':
+        if state in ['Eaten', 'Win', 'Done']:
             terminal_idx = i + 1
             break
 
@@ -405,27 +404,56 @@ def animate_solution2(maze, path):
         i = frame
 
         # Reset previous positions to original colors
-        if i > 0 and path[i-1] != 'Eaten' and path[i-1] != 'Win':
-            player_prev = path[i-1][0]
-            minotaur_prev = path[i-1][1]
-            grid.get_celld()[(player_prev[0], player_prev[1])].set_facecolor(col_map[maze[player_prev]])
-            grid.get_celld()[(minotaur_prev[0], minotaur_prev[1])].set_facecolor(col_map[maze[minotaur_prev]])
+        if i > 0:
+            prev_state = path[i-1]
+            if prev_state not in ['Eaten', 'Win', 'Done']:
+                player_prev = prev_state[0]
+                minotaur_prev = prev_state[1]
+                grid.get_celld()[(player_prev[0], player_prev[1])].set_facecolor(col_map[maze[player_prev]])
+                grid.get_celld()[(minotaur_prev[0], minotaur_prev[1])].set_facecolor(col_map[maze[minotaur_prev]])
         
         # Color current positions
-        if path[i] != 'Eaten' and path[i] != 'Win':
-            player_pos = path[i][0]
-            minotaur_pos = path[i][1]
+        current_state = path[i]
+        if current_state not in ['Eaten', 'Win', 'Done']:
+            player_pos = current_state[0]
+            minotaur_pos = current_state[1]
             grid.get_celld()[(player_pos[0], player_pos[1])].set_facecolor(col_map[-2])  # Player
             grid.get_celld()[(minotaur_pos[0], minotaur_pos[1])].set_facecolor(col_map[-1])  # Minotaur
             ax.set_title(f'Policy simulation - Step {i}')
         else:
-            ax.set_title(f'Policy simulation - Step {i} - {path[i]}!')
+            ax.set_title(f'Policy simulation - Step {i} - {current_state}!')
+
+        # Draw path on the last frame
+        if i == terminal_idx - 1:
+            player_positions = []
+            minotaur_positions = []
+            for k in range(terminal_idx):
+                state = path[k]
+                if state not in ['Eaten', 'Win', 'Done']:
+                    player_positions.append(state[0])
+                    minotaur_positions.append(state[1])
+            
+            if len(player_positions) > 0:
+                # Convert to x, y coordinates for plotting
+                xs = [(pos[1] + 0.5) / cols for pos in player_positions]
+                ys = [1 - (pos[0] + 0.5) / rows for pos in player_positions]
+                xss = [(pos[1] + 0.5) / cols for pos in minotaur_positions]
+                yss = [1 - (pos[0] + 0.5) / rows for pos in minotaur_positions]
+
+                ax.plot(xss, yss, color='red', linewidth=2, linestyle='-', marker='o', markersize=5)
+                ax.plot(xs, ys, color='blue', linewidth=2, linestyle='-', marker='o', markersize=5)  
+                             
+                # Mark start and end
+                ax.plot(xs[0], ys[0], 'go', markersize=10) # Start
+                ax.plot(xs[-1], ys[-1], 'b<', markersize=10) # End
+                #ax.plot(xss[0], yss[0], 'mo', markersize=10) # Minotaur Start
+                ax.plot(xss[-1], yss[-1], 'rx', markersize=20) # Minotaur End
 
         return grid,
 
     from matplotlib.animation import FuncAnimation
     anim = FuncAnimation(fig, update, frames=terminal_idx, interval=300, repeat=False, blit=False)
-    
+    time.sleep(0.5)
     plt.show()
     return anim
 

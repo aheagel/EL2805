@@ -1,5 +1,4 @@
 from maze import *
-from scipy.stats import geom
 
 class MazeAdvanced(Maze):
     """ Class that implements the Maze environment with a Minotaur that can move """
@@ -206,5 +205,5 @@ if __name__ == "__main__":
     path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 
     print('Value function', V[env.map[start]])
-    print("True probability for ideal case when we know the optimal policy (Minotaur can't stand still)", 1-geom.cdf(29, p=1-discount)) # special case when we got opposite parity
+    print("True probability for ideal case when we know the optimal policy (Minotaur can't stand still)", discount**29) # special case when we got opposite parity
     animate_solution2(maze, path)

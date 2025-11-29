@@ -3,6 +3,7 @@ from maze import animate_solution2, value_iteration
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from rl_algorithms_improved import Q_learning_improved
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do Q-learning on the advanced maze environment
@@ -84,14 +85,14 @@ if __name__ == "__main__":
     V_star, _ = value_iteration(env, discount, 1e-12)
 
     itera = 50000
-    alpha0 = lambda n: n**(-0.51)
-    alpha1 = lambda n: n**(-2/3)
-    epps = lambda k: 0.2
+    alpha0 = ('power', 1, 0.51)
+    alpha1 = ('power', 1, 2/3)
+    epps = ('constant', 0.2)
     
     Q_start = np.random.rand(env.n_states, env.n_actions)
-
-    Q0, number_of_visits0, v_start0 = Q_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps, Q=Q_start.copy())
-    Q1, number_of_visits1, v_start1 = Q_learning(env, start, discount, n_episodes=itera, alpha=alpha1, epsilon=epps, Q=Q_start.copy())
+    
+    Q0, number_of_visits0, v_start0 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha0, epsilon_func=epps, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = Q_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha1, epsilon_func=epps, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
 

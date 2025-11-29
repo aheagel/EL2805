@@ -23,3 +23,5 @@ horizon = 100 #np.random.geometric(p=1-discount)
 V, policy = value_iteration(env, discount, accuracy_theta)
 path = env.simulate(start, np.repeat(policy.reshape(len(policy),1), horizon, 1), horizon)
 animate_solution2(maze, path)
+
+print(f"Optimal Value at Start State: {V[env.map[start]]:.4f}")

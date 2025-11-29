@@ -3,6 +3,8 @@ from maze import animate_solution2, value_iteration
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from rl_algorithms_improved import SARSA_learning_improved
+
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do SARSA learning on the advanced maze environment
@@ -84,15 +86,15 @@ if __name__ == "__main__":
 
     V_star, _ = value_iteration(env, discount, 1e-12)
 
-    itera = 50000
-    alpha0 = lambda n: n**(-2/3)
-    epps0 = lambda k: 0.1
-    epps1 = lambda k: 0.2
-    
-    Q_start = np.random.rand(env.n_states, env.n_actions)
+    itera = 100000
+    alpha0 = ('power', 1, 2/3)
+    epps0 = ('constant', 0.1)
+    epps1 = ('constant', 0.2)
+        
+    Q_start = np.ones((env.n_states, env.n_actions)) # Optimistic initialization
 
-    Q0, number_of_visits0, v_start0 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps0, Q=Q_start.copy())
-    Q1, number_of_visits1, v_start1 = SARSA_learning(env, start, discount, n_episodes=itera, alpha=alpha0, epsilon=epps1, Q=Q_start.copy())
+    Q0, number_of_visits0, v_start0 = SARSA_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha0, epsilon_func=epps0, Q=Q_start.copy())
+    Q1, number_of_visits1, v_start1 = SARSA_learning_improved(env, start, discount, n_episodes=itera, alpha_func=alpha0, epsilon_func=epps1, Q=Q_start.copy())
     
     policy = np.argmax(Q0, axis=1)
 

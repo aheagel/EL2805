@@ -4,7 +4,6 @@ from problem1i import Q_learning
 from problem1j import SARSA_learning
 from problem1h import MazeAdvanced
 from maze import *
-from scipy.stats import geom
 
 import numpy as np
 
@@ -97,7 +96,7 @@ if __name__ == "__main__":
 
     # theoretical / expected value at start (from value iteration) and alternative
     theoretical = V_star[env.map[start]]
-    theoretical2 = 1-geom.cdf(29, 1 - discount)
+    theoretical2 = discount**29
 
     plt.axhline(y=theoretical, color='r', linestyle='--', linewidth=1.5,
                 label=f'Probability from Value Iteration (V*) = {theoretical:.4f}')
