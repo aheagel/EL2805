@@ -301,7 +301,7 @@ Date: 2025/12/05 18.00 \\
         \subsubsection{(i) BOUNS}
             \myparagraph{1)}
             \begin{algorithm}
-            \caption{Q-learning for Advanced Maze}
+            \caption{Q-learning}
             \begin{algorithmic}[1]
             \Require Environment $\mathcal{E}$, Start State $s_{start}$, Discount $\gamma$, Episodes $K$
             \State Initialize $Q(s, a) \sim U(0,1)$ for all $s \in \mathcal{S}, a \in \mathcal{A}$
@@ -334,6 +334,7 @@ Date: 2025/12/05 18.00 \\
             \EndFor
             \State \Return $Q, N, V_{starts}$
             \end{algorithmic}
+            \label{alg:Qlearning}
             \end{algorithm}
 
             \myparagraph{2)}
@@ -371,7 +372,7 @@ Date: 2025/12/05 18.00 \\
             We can also observe that a higher $\epsilon$ (more exploration) generally leads slower convergence across all initializations. 
             This is because excessive exploration prevents the agent from sufficiently exploiting learned knowledge to refine the $Q$-values.
             
-            \myparagraph{3}
+            \myparagraph{3)}
             \begin{figure}[H]
                 \centering
                 \begin{subfigure}[b]{0.49\textwidth}
@@ -405,9 +406,89 @@ Date: 2025/12/05 18.00 \\
             Note that the episode count was increased to 200,000 to highlight these asymptotic differences.
         
         \subsubsection{(j) BOUNS}
+            \myparagraph{1)}
+            The only thing that changes in the SARSA algorithm compared to Q-learning is the update rule.
+            Instead of using the maximum $Q$-value of the next state, we use the $Q$-value of the next action $a'$, selected according to the current policy.
+            To be more precise, instead of the following from Algorithm \ref{alg:Qlearning}:
+            \begin{algorithmic}[1]
+                \State $Q(s, a) \gets Q(s, a) + \alpha \cdot \left( r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right)$
+            \end{algorithmic}
+            We now have:
+            \begin{algorithmic}[1]
+                \State \textbf{Select next action} $a'$:
+                    \If{$\text{random}() < \varepsilon$}
+                        \State $a' \gets \text{random action from } \mathcal{A}$
+                    \Else
+                        \State $a' \gets \arg\max_{a'} Q(s', a')$
+                    \EndIf
+                \State $Q(s, a) \gets Q(s, a) + \alpha \cdot \left( r + \gamma Q(s', a') - Q(s, a) \right)$
+            \end{algorithmic}
 
+            \myparagraph{2)}
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j2Zero.png}
+                    \caption{Q initialized to zero}
+                    \label{fig:problem1j2Zero}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j2Ones.png}
+                    \caption{Q initialized to one}
+                    \label{fig:problem1j2Ones}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.8\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j2Rand.png}
+                    \caption{Q initialized uniformly}
+                    \label{fig:problem1j2Rand}
+                \end{subfigure}
+                \caption{Convergence of the value function for different $Q$-table initializations with diffrent $\epsilon$, where $\alpha=2/3$.}
+                \label{fig:problem1j2}
+            \end{figure}
+            A fixed $\epsilon=0.2$ hinders convergence (Figure \ref{fig:problem1j2}) because SARSA updates $Q$-values using the actual next action, including suboptimal exploratory moves. 
+            This prevents the value estimates from stabilizing on the theoretical optimum, as the agent effectively learns the value of a policy that acts randomly $\epsilon$ of the time. 
+            Random initialization remains superior to other methods, though no configuration reaches the optimal value within 1,000,000 episodes due to the fixed exploration rate.
+
+            \myparagraph{3)}
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j3Zero.png}
+                    \caption{Q initialized to zero}
+                    \label{fig:problem1j3Zero}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.49\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j3Ones.png}
+                    \caption{Q initialized to one}
+                    \label{fig:problem1j3Ones}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.8\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1j3Rand.png}
+                    \caption{Q initialized uniformly}
+                    \label{fig:problem1j3Rand}
+                \end{subfigure}
+                \caption{Convergence of the value function for different $Q$-table initializations with different $\alpha$ where $\epsilon=0.1$.}
+                \label{fig:problem1j3}
+            \end{figure}
+            With a decaying $\epsilon$, the model finally converges to the optimal value (Figure \ref{fig:problem1j3Ones}).
+            In this setting, optimistic initialization (ones) outperforms random initialization because the high initial learning rate rapidly corrects the over-estimations. 
+            regarding parameter tuning, maintaining $\alpha > \delta$ is not necessarily beneficial when convergence is smooth, as a faster decaying $\epsilon$ encourages the model to exploit the optimal policy sooner. 
+            However, for random initialization (Figure \ref{fig:problem1j3Rand}), a higher learning rate proves superior, as it allows for significant updates later in training, helping the agent escape local optima caused by insufficient early exploration.
+    
+            We iterated for 1,000,000 episodes to ensure convergence across all configurations. To remain in line with the problem formulation, we have also marked the 50,000-episode threshold for reference.
+       
         \subsubsection{(k) BOUNS}
-
+            
     \clearpage
     \newpage
 \section{Problem 2}

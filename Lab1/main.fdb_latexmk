@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1764448648.57352 "/Users/anh/Documents/Programming/EL2805/Lab1/main.tex" "main.pdf" "main" 1764448649.57762 0
-  "/Users/anh/Documents/Programming/EL2805/Lab1/main.tex" 1764448647.45964 24957 a3221e48f67662f9c81bf12e7f526510 ""
+["pdflatex"] 1764453687.47059 "/Users/anh/Documents/Programming/EL2805/Lab1/main.tex" "main.pdf" "main" 1764453688.62157 0
+  "/Users/anh/Documents/Programming/EL2805/Lab1/main.tex" 1764453687.29555 30054 c16cb55a7908a4eb63285a15fab57c83 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
@@ -191,9 +191,15 @@
   "figures/1i3Ones.png" 1764445262.44103 59944 9098b839cc546a3d7baa60d95eb3c5e0 ""
   "figures/1i3Rand.png" 1764445191.51869 57657 5e4581b7c479c576b1c17d2039b0967f ""
   "figures/1i3Zero.png" 1764445230.10054 42947 689406e728f099b5ddd65d6014a4a8fb ""
-  "main.aux" 1764448649.51967 7892 1bf96a6daec58abe8a8783966f82a820 "pdflatex"
-  "main.tex" 1764448647.45964 24957 a3221e48f67662f9c81bf12e7f526510 ""
-  "main.toc" 1764448649.52038 2499 05cdce43f28bfe6d267c71c0445b0fa9 "pdflatex"
+  "figures/1j2Ones.png" 1764450041.63386 60501 76dec7f2210f28ea23776390f8e643a7 ""
+  "figures/1j2Rand.png" 1764450117.86894 59139 da2a2e0e0c23dd416e93f62f166d61cd ""
+  "figures/1j2Zero.png" 1764450073.18331 40615 637906243a614fd58d9b7364c143ce6d ""
+  "figures/1j3Ones.png" 1764450628.85896 58021 4479f1ccd66840ca1f123eabe60e07fa ""
+  "figures/1j3Rand.png" 1764450724.06056 59538 8b901ff7e77452d69ce1e2753e34b787 ""
+  "figures/1j3Zero.png" 1764450666.61612 41241 0e324cbc5c0535712f20e60fe7e2624b ""
+  "main.aux" 1764453688.56195 9534 d41a31a2d72dcaae863495af9d6ebc26 "pdflatex"
+  "main.tex" 1764453687.29555 30054 c16cb55a7908a4eb63285a15fab57c83 ""
+  "main.toc" 1764453688.56281 2674 4a4fd9cb2146f39879a9ef7fe41cbbf0 "pdflatex"
   (generated)
   "main.aux"
   "main.log"

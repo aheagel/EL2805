@@ -7,7 +7,7 @@ from rl_algorithms_improved import Q_learning_improved
 
 # FIXA VIKTERNA I MAIN ANNARS funkar den inte!
 # Lets do Q-learning on the advanced maze environment
-def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=None, alpha=None, epsilon=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=None, alpha_func=None, epsilon_func=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Q-learning algorithm for the advanced maze environment. epsilon-greedy policy is used for action selection.
     
@@ -28,11 +28,11 @@ def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=Non
     if Q is None:
         Q = np.random.rand(env.n_states, env.n_actions) # Initialize Q-table with random to help with initial exploration
     
-    if alpha is None:
-        alpha = lambda n: n**-(2/3)  # Learning rate function
+    if alpha_func is None:
+        alpha_func = lambda n: n**-(2/3)  # Learning rate function
 
-    if epsilon is None:
-        epsilon = lambda k: 0.1 # Fixed exploration rate
+    if epsilon_func is None:
+        epsilon_func = lambda k: 0.1 # Fixed exploration rate
 
     def epsilon_greedy_policy(current_state, eps):
         if np.random.rand() < eps:
@@ -46,7 +46,7 @@ def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=Non
     V_starts = np.zeros(n_episodes)  # To store rewards for each episode
     Q[env.map['Done'], :] = 0  # Q-values for terminal state are zero
     for episode in tqdm(range(n_episodes)):
-        eps = epsilon(episode+1)
+        eps = epsilon_func(episode+1)
         state = env.map[start] # Reset to start state at the beginning of each episode
 
         while env.states[state] not in ['Done']:
@@ -57,7 +57,7 @@ def Q_learning(env, start, gamma, n_episodes=50000, number_of_visits=None, Q=Non
             mino_states, probs = env.minotaur_states_probs(env.move(state, action))
             next_state = np.random.choice(mino_states, p=probs)
 
-            Q[state, action] += alpha(number_of_visits[state, action]) * (reward + gamma * Q[next_state].max() - Q[state, action])
+            Q[state, action] += alpha_func(number_of_visits[state, action]) * (reward + gamma * Q[next_state].max() - Q[state, action])
 
             state = next_state
             

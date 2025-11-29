@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.11.14)  29 NOV 2025 21:37
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.11.14)  29 NOV 2025 23:01
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -712,20 +712,20 @@ Package pdftex.def Info: figures/1f.png  used on input line 224.
 <figures/1i2Zero.png, id=76, 722.7pt x 433.62pt>
 File: figures/1i2Zero.png Graphic file (type png)
 <use figures/1i2Zero.png>
-Package pdftex.def Info: figures/1i2Zero.png  used on input line 344.
+Package pdftex.def Info: figures/1i2Zero.png  used on input line 345.
 (pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
 <figures/1i2Ones.png, id=77, 722.7pt x 433.62pt>
 File: figures/1i2Ones.png Graphic file (type png)
 <use figures/1i2Ones.png>
-Package pdftex.def Info: figures/1i2Ones.png  used on input line 351.
+Package pdftex.def Info: figures/1i2Ones.png  used on input line 352.
 (pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
 <figures/1i2Rand.png, id=78, 722.7pt x 433.62pt>
 File: figures/1i2Rand.png Graphic file (type png)
 <use figures/1i2Rand.png>
-Package pdftex.def Info: figures/1i2Rand.png  used on input line 358.
+Package pdftex.def Info: figures/1i2Rand.png  used on input line 359.
 (pdftex.def)             Requested size: 339.24956pt x 203.55pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 339--364
+Underfull \hbox (badness 10000) in paragraph at lines 340--365
 
  []
 
@@ -735,20 +735,20 @@ Underfull \hbox (badness 10000) in paragraph at lines 339--364
 <figures/1i3Zero.png, id=84, 722.7pt x 433.62pt>
 File: figures/1i3Zero.png Graphic file (type png)
 <use figures/1i3Zero.png>
-Package pdftex.def Info: figures/1i3Zero.png  used on input line 379.
+Package pdftex.def Info: figures/1i3Zero.png  used on input line 380.
 (pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
 <figures/1i3Ones.png, id=85, 722.7pt x 433.62pt>
 File: figures/1i3Ones.png Graphic file (type png)
 <use figures/1i3Ones.png>
-Package pdftex.def Info: figures/1i3Ones.png  used on input line 386.
+Package pdftex.def Info: figures/1i3Ones.png  used on input line 387.
 (pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
 <figures/1i3Rand.png, id=86, 722.7pt x 433.62pt>
 File: figures/1i3Rand.png Graphic file (type png)
 <use figures/1i3Rand.png>
-Package pdftex.def Info: figures/1i3Rand.png  used on input line 393.
+Package pdftex.def Info: figures/1i3Rand.png  used on input line 394.
 (pdftex.def)             Requested size: 339.24956pt x 203.55pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 374--399
+Underfull \hbox (badness 10000) in paragraph at lines 375--400
 
  []
 
@@ -757,8 +757,56 @@ Underfull \hbox (badness 10000) in paragraph at lines 374--399
 [11 <./figures/1i2Zero.png> <./figures/1i2Ones.png> <./figures/1i2Rand.png>]
 
 [12 <./figures/1i3Zero.png> <./figures/1i3Ones.png> <./figures/1i3Rand.png>]
+<figures/1j2Zero.png, id=102, 722.7pt x 433.62pt>
+File: figures/1j2Zero.png Graphic file (type png)
+<use figures/1j2Zero.png>
+Package pdftex.def Info: figures/1j2Zero.png  used on input line 432.
+(pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
+<figures/1j2Ones.png, id=103, 722.7pt x 433.62pt>
+File: figures/1j2Ones.png Graphic file (type png)
+<use figures/1j2Ones.png>
+Package pdftex.def Info: figures/1j2Ones.png  used on input line 439.
+(pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
+<figures/1j2Rand.png, id=104, 722.7pt x 433.62pt>
+File: figures/1j2Rand.png Graphic file (type png)
+<use figures/1j2Rand.png>
+Package pdftex.def Info: figures/1j2Rand.png  used on input line 446.
+(pdftex.def)             Requested size: 339.24956pt x 203.55pt.
 
-[13
+Underfull \hbox (badness 10000) in paragraph at lines 427--452
+
+ []
+
+
+
+[13 <./figures/1j2Zero.png> <./figures/1j2Ones.png> <./figures/1j2Rand.png>]
+<figures/1j3Zero.png, id=112, 722.7pt x 433.62pt>
+File: figures/1j3Zero.png Graphic file (type png)
+<use figures/1j3Zero.png>
+Package pdftex.def Info: figures/1j3Zero.png  used on input line 462.
+(pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
+<figures/1j3Ones.png, id=113, 722.7pt x 433.62pt>
+File: figures/1j3Ones.png Graphic file (type png)
+<use figures/1j3Ones.png>
+Package pdftex.def Info: figures/1j3Ones.png  used on input line 469.
+(pdftex.def)             Requested size: 207.79189pt x 124.6747pt.
+<figures/1j3Rand.png, id=114, 722.7pt x 433.62pt>
+File: figures/1j3Rand.png Graphic file (type png)
+<use figures/1j3Rand.png>
+Package pdftex.def Info: figures/1j3Rand.png  used on input line 476.
+(pdftex.def)             Requested size: 339.24956pt x 203.55pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 457--482
+
+ []
+
+
+
+[14 <./figures/1j3Zero.png> <./figures/1j3Ones.png> <./figures/1j3Rand.png>]
+
+[15]
+
+[16
 
 ] (./main.aux)
  ***********
@@ -767,18 +815,18 @@ L3 programming layer <2025-01-18>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 19453 strings out of 473190
- 384431 string characters out of 5715799
- 775984 words of memory out of 5000000
- 42324 multiletter control sequences out of 15000+600000
+ 19510 strings out of 473190
+ 385828 string characters out of 5715799
+ 776435 words of memory out of 5000000
+ 42381 multiletter control sequences out of 15000+600000
  566288 words of font info for 63 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,10n,91p,527b,533s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on main.pdf (14 pages, 605428 bytes).
+Output written on main.pdf (17 pages, 871300 bytes).
 PDF statistics:
- 179 PDF objects out of 1000 (max. 8388607)
- 104 compressed objects within 2 object streams
+ 203 PDF objects out of 1000 (max. 8388607)
+ 113 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 74 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 104 words of extra memory for PDF output out of 10000 (max. 10000000)
 

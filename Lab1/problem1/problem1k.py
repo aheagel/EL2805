@@ -1,11 +1,30 @@
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from Lab1.problem1.problem1i2 import Q_learning
-from problem1j import SARSA_learning
+from problem1i2 import Q_learning
+from problem1j2 import SARSA_learning
 from problem1h import MazeAdvanced
 from maze import *
-
+from rl_algorithms_improved import Q_learning_improved, SARSA_learning_improved
+from joblib import Parallel, delayed
 import numpy as np
+
+def run_simulation(env, start, discount, Q_policy, S_policy):
+    # Note: Each process gets its own random state, so this is safe
+    horizon = np.random.geometric(1-discount)
+    
+    # Reshape policies inside the function to avoid passing large arrays repeatedly if possible, 
+    # but passing them as args is fine for this size.
+    q_pol_reshaped = np.repeat(Q_policy.reshape(len(Q_policy), 1), horizon, 1)
+    s_pol_reshaped = np.repeat(S_policy.reshape(len(S_policy), 1), horizon, 1)
+
+    path_Q = env.simulate(start, q_pol_reshaped, horizon)
+    path_S = env.simulate(start, s_pol_reshaped, horizon)
+    
+    # Return the boolean results directly
+    q_win = (path_Q[-2] == 'Win')
+    s_win = (path_S[-2] == 'Win')
+    
+    return q_win, s_win
 
 if __name__ == "__main__":
     # Description of the maze as a numpy array
@@ -23,19 +42,19 @@ if __name__ == "__main__":
     env = MazeAdvanced(maze, prob_to_player=0.35, still_minotaur=False)
     discount = 49/50
     start  = ((0,0), (6,5), False)
-    n_episodes = 50000
-    Q_start = np.random.rand(env.n_states, env.n_actions)
+    n_episodes = 1000000
+    Q_start = np.ones((env.n_states, env.n_actions))
 
-    alphaQ = lambda n: n**(-0.501)
-    eppsQ = lambda k: 0.2 #k**(-0.4)
+    alphaQ = ("power", 1, 0.501) #lambda n: n**(-0.501)
+    eppsQ = ("constant", 0.2) #lambda k: 0.2 #k**(-0.4)
 
-    alphaS = lambda n: n**(-0.501)
-    eppsS = lambda k: 0.5*k**(-0.6)
+    alphaS = ("power", 1, 0.501) #lambda n: n**(-0.501)
+    eppsS = ("power", 1, 0.95) #lambda k: k**(-1)
 
     # Q-learning
-    Q_qlearning, visits_qlearning, V_qlearning = Q_learning(env, start, discount, n_episodes=n_episodes, alpha=alphaQ, epsilon=eppsQ, Q=Q_start.copy())
+    Q_qlearning, visits_qlearning, V_qlearning = Q_learning_improved(env, start, discount, n_episodes=n_episodes, alpha_func=alphaQ, epsilon_func=eppsQ, Q=Q_start.copy())
     # SARSA-learning
-    Q_sarsa, visits_sarsa, V_sarsa = SARSA_learning(env, start, discount, n_episodes=n_episodes, alpha=alphaS, epsilon=eppsS, Q=Q_start.copy())
+    Q_sarsa, visits_sarsa, V_sarsa = SARSA_learning_improved(env, start, discount, n_episodes=n_episodes, alpha_func=alphaS, epsilon_func=eppsS, Q=Q_start.copy())
 
     # Extract policies
     Q_policy = np.argmax(Q_qlearning, axis=1)
@@ -47,29 +66,25 @@ if __name__ == "__main__":
     # Plot the convergence
     plt.figure(figsize=(10, 6))
 
-    plt.plot(np.arange(1,n_episodes+1), V_qlearning, label=r'Q learning', marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
-    plt.plot(np.arange(1,n_episodes+1), V_sarsa, label=r'SARSA learning', marker='x', markersize=4, markevery=10000, linewidth=1)
-    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]:.4f}')
-
+    plt.plot(np.arange(1,n_episodes+1), V_qlearning, label=f'Q learning last Value: {V_qlearning[-1]}' , marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
+    plt.plot(np.arange(1,n_episodes+1), V_sarsa, label=f'SARSA learning last Value: {V_sarsa[-1]}', marker='x', markersize=4, markevery=10000, linewidth=1)
+    plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]}')
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')
-    plt.title('Convergence of methods Q-learning and SARSA-learning')
+    plt.title(r'Convergence of SARSA and Q learning with different $\epsilon$ and $\alpha$')
     plt.legend()
     plt.grid(True)
     plt.show()
 
-    rept = 50000
-    mapping = np.empty((int(rept),2), dtype=bool)
-    for i in tqdm(range(rept)):
-        horizon = np.random.geometric(1-discount)
+    rept = 1000000
 
-        path_Q = env.simulate(start, np.repeat(Q_policy.reshape(len(Q_policy),1), horizon, 1), horizon)
-        path_S = env.simulate(start, np.repeat(S_policy.reshape(len(S_policy),1), horizon, 1), horizon)
-        mapping[i,0] = path_Q[-2] == 'Win'
-        mapping[i,1] = path_S[-2] == 'Win'
+    results = Parallel(n_jobs=-1)( # this makes the code run in parallel 4x the speed
+        delayed(run_simulation)(env, start, discount, Q_policy, S_policy) 
+        for _ in tqdm(range(int(rept)), desc="Running Simulations")
+    )
 
-
-    iterations = np.arange(1, rept+1)
+    mapping = np.array(results, dtype=bool) 
+    iterations = np.arange(1, int(rept)+1)
     wins_Q = mapping[:,0].astype(int)
     wins_S = mapping[:,1].astype(int)
 
@@ -87,10 +102,10 @@ if __name__ == "__main__":
     final_S = cumavg_S[-1]
     plt.plot(rept, final_Q, 'o', color='C0', markersize=8, markeredgecolor='k')
     plt.plot(rept, final_S, 'o', color='C1', markersize=8, markeredgecolor='k')
-    plt.annotate(f'{final_Q:.4f}', xy=(rept, final_Q), xytext=(rept*0.98, final_Q + 0.03),
+    plt.annotate(f'{final_Q}', xy=(rept, final_Q), xytext=(rept*0.98, final_Q + 0.03),
                  fontsize=10, color='C0', ha='right', va='bottom',
                  bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.8))
-    plt.annotate(f'{final_S:.4f}', xy=(rept, final_S), xytext=(rept*0.98, final_S - 0.06),
+    plt.annotate(f'{final_S}', xy=(rept, final_S), xytext=(rept*0.98, final_S - 0.06),
                  fontsize=10, color='C1', ha='right', va='top',
                  bbox=dict(boxstyle='round,pad=0.2', fc='white', alpha=0.8))
 
@@ -99,9 +114,9 @@ if __name__ == "__main__":
     theoretical2 = discount**29
 
     plt.axhline(y=theoretical, color='r', linestyle='--', linewidth=1.5,
-                label=f'Probability from Value Iteration (V*) = {theoretical:.4f}')
+                label=f'Probability from Value Iteration (V*) = {theoretical}')
     plt.axhline(y=theoretical2, color='b', linestyle=':', linewidth=1,
-                label=f'Probability from Geometric CDF = {theoretical2:.4f}')
+                label=f'Probability surviving 29 steps = {theoretical2}')
 
     plt.xlim(1, rept)
     plt.ylim(-0.05, 1.05)
