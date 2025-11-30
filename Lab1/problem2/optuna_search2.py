@@ -9,8 +9,8 @@ import gymnasium as gym
 from joblib import Parallel, delayed
 
 
-from problem2b import make_polynomial_schedule, make_exponential_schedule
-from problem2e3 import SARSA3_learning
+from problem_2b import make_polynomial_schedule, make_exponential_schedule
+from problem_2e3 import SARSA3_learning
 from optuna_search import final_rolling_n_average, make_exponential_schedule
 
 N_EPISODES = 200

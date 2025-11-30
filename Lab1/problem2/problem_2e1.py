@@ -1,3 +1,6 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -7,7 +10,7 @@ import gymnasium as gym
 import pickle
 from joblib import Parallel, delayed
 from problem2 import running_average, scale_state_variables
-from problem2b import SARSA2_learning, make_exponential_schedule, make_polynomial_schedule
+from problem_2b import SARSA2_learning, make_exponential_schedule, make_polynomial_schedule
 
 if __name__ == "__main__":
     # Import and initialize Mountain Car Environment
@@ -17,15 +20,7 @@ if __name__ == "__main__":
     N_episodes = 200
     p = 2
     eta = np.array([[i, j] for i in range(p + 1) for j in range(p + 1)]).T
-    params = {
-        'lambda': 0.8540592523120906,
-        'momentum': 0.9983674411507302,
-        'lr_initial': 6.644641407969861e-05,
-        'lr_scale': 21.477703280373976,
-        'lr_power': 0.6740471797607481,
-        'eps_start': 0.0021543255282344886,
-        'eps_decay': 0.9337869414588281
-    }
+    params = {'lambda': 0.8540592523120906, 'momentum': 0.9983674411507302, 'lr_initial': 6.644641407969861e-05, 'lr_scale': 21.477703280373976, 'lr_power': 0.6740471797607481, 'eps_start': 0.0021543255282344886, 'eps_decay': 0.9337869414588281}
     epsilon_schedule = make_exponential_schedule(params['eps_start'], 0, params['eps_decay'])
     learning_rate_schedule = make_polynomial_schedule(params['lr_initial'], 0, params['lr_scale'], params['lr_power'])
 

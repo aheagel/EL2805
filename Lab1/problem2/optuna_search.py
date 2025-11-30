@@ -8,7 +8,7 @@ from optuna import samplers
 import gymnasium as gym
 from joblib import Parallel, delayed
 
-from problem2b import SARSA2_learning, make_polynomial_schedule, make_exponential_schedule
+from problem_2b import SARSA2_learning, make_polynomial_schedule, make_exponential_schedule
 from problem2 import running_average
 
 

@@ -1,3 +1,6 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 from maze import Maze, dynamic_programming
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,5 +1,8 @@
-from problem1h import MazeAdvanced
-from problem1j2 import SARSA_learning
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
+from problem_1h import MazeAdvanced
+from problem_1j2 import SARSA_learning
 from maze import animate_solution2, value_iteration
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,3 +1,6 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -6,8 +9,8 @@ import os
 import gymnasium as gym
 import pickle
 from problem2 import running_average
-from problem2b import make_exponential_schedule, make_polynomial_schedule
-from problem2e3 import SARSA3_learning
+from Lab1.problem2.problem_2b import make_exponential_schedule, make_polynomial_schedule
+from Lab1.problem2.problem_2e3 import SARSA3_learning
 
 if __name__ == "__main__":
     # Import and initialize Mountain Car Environment

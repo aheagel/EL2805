@@ -1,3 +1,6 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 from maze import Maze, value_iteration, animate_solution2
 import numpy as np
 import matplotlib.pyplot as plt

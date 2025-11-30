@@ -1,8 +1,11 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from problem1i2 import Q_learning
-from problem1j2 import SARSA_learning
-from problem1h import MazeAdvanced
+from problem_1i2 import Q_learning
+from problem_1j2 import SARSA_learning
+from problem_1h import MazeAdvanced
 from maze import *
 from rl_algorithms_improved import Q_learning_improved, SARSA_learning_improved
 from joblib import Parallel, delayed

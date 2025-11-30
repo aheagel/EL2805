@@ -1,9 +1,12 @@
+# Anh Do: 20020416-2317
+# Saga Tran: 19991105-2182
+
 import gymnasium as gym
 import numpy as np
 import sys
 import pickle
 import matplotlib.pyplot as plt
-from problem2b import FourierBasis, Value
+from problem_2b import FourierBasis, Value
 from problem2 import scale_state_variables
 
 # Import and initialize Mountain Car Environment
