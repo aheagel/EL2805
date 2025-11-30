@@ -686,30 +686,39 @@ Consequently, the value landscape (Figure \ref{fig:problem2dValueBAD}) is distor
     This can result in "pessimistic" estimates where the agent falsely believes certain useful state-actions are worse than they are, or "arbitrary" biases where the agent favors a direction purely due to initialization noise rather than experience. 
     In the context of Function Approximation with momentum, these erratic initial gradients make it difficult for the optimizer to settle into a stable descent direction, significantly delaying learning.
 
-    \myparagraph{3)}
-    To remedy the initialization sensitivity observed in Section \ref{sec:problem2e2}, we implemented an Upper Confidence Bound (UCB) action selection strategy.
+    \myparagraph{3)}\label{sec:problem2e3}
+    We implemented an Upper Confidence Bound (UCB) action selection strategy.
     This method balances exploration and exploitation by augmenting the action-value estimates ($Q$-values) with an uncertainty bonus proportional to the rarity of the state-action pair \cite{sutton2018reinforcement}.
 
     Since the Mountain Car state space is continuous, exact visitation counts are impossible.
     We addressed this by discretizing the state space into a grid of $20 \times 20$ bins for position and velocity, respectively.
-    As our implementation normalizes the state variables to the range $[0, 1]$, the bin indices $(i, j)$ for a given state $s=(s_1, s_2)$ are computed as:
-    $$ i = \lfloor 20 \cdot s_1 \rfloor, \quad j = \lfloor 20 \cdot s_2 \rfloor $$
+    As our implementation normalizes the state variables to the range $[0, 1]$, the bin indices $(i, j)$ for a given normalized state $\bar{s}=(\bar{p}, \bar{v})$ are computed as:
+    $$ i = \lfloor 20 \cdot \bar{p} \rfloor, \quad j = \lfloor 20 \cdot \bar{v} \rfloor $$
 
     We maintain a visitation count table $N(i, j, a)$ which tracks how many times action $a$ has been taken in bin $(i, j)$.
     The policy then selects the action $a$ that maximizes the combined value:
-    $$ a = \operatorname*{argmax}_{\alpha \in \mathcal{A}} \left( Q(s_t, \alpha) + c \sqrt{\frac{\ln\left(\sum_{i,j,a} N(i, j, a)\right)}{N(i, j, \alpha) + \epsilon}} \right) $$
-    
-    where $t$ is the total number of steps taken, and $c$ is the exploration parameter (which we decayed over episodes).
-    The term $\sqrt{\frac{\ln t}{N(i, j, a)}}$ acts as the exploration bonus: it is large for actions rarely visited in the current region (low $N$) and small for well-explored actions, effectively guiding the agent to explore unknown regions of the state space despite the pessimistic value initialization.
+    $$ a = \operatorname*{argmax}_{\alpha \in \mathcal{A}} \left( Q(s, \alpha) + c \sqrt{\frac{\ln\left(\sum_{x,y,k} N(x, y, k)\right)}{N(i, j, \alpha) + 10^{-5}}} \right) $$
 
-    \subsubsection{(f) Submission of Optimal Weights}
-    We have extracted the parameters of the optimal policy derived in Part (b) and saved them to the file \texttt{weights.pkl}.
-    This file contains a dictionary object with the following keys, in accordance with the assignment instructions:
-    \begin{itemize}
-        \item \textbf{'W'}: The learned weight matrix of dimensions $K \times M$ for the Q-function.
-        \item \textbf{'N'}: The matrix containing the Fourier basis coefficients ($\eta_i$).
-    \end{itemize}
-    This file allows for the verification of our policy's performance using the provided \texttt{check\_solution.py} script.
+    Here, the term inside the logarithm represents the total number of steps taken across all episodes.
+    The square root term acts as the exploration bonus. 
+    It is large for actions rarely visited in the current region (low local $N$) relative to the total training time, effectively guiding the agent to explore unknown regions.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.6\textwidth]{figures/2eUCBreward.png}
+        \caption{Learning curve using UCB action selection with zero weight initialization.}
+        \label{fig:problem2e3}
+    \end{figure}
+
+    We observed that UCB action selection (Figure \ref{fig:problem2e3}) accelerates learning compared to $\epsilon$-greedy exploration. 
+    UCB converges within approximately 50 episodes, whereas $\epsilon$-greedy required around 80 episodes to reach similar performance (Figure \ref{fig:problem2dLearning}).
+    Furthermore, UCB appears to converge to a more stable optimal policy, achieving a consistently higher average reward in the final episodes compared to the downward spikes observed in the $\epsilon$-greedy approach.
+
+    To ensure a robust comparison, we utilized Optuna to tune the hyperparameters for both models using identical search spaces for shared variables (differing only in exploration parameters $c$ vs. $\epsilon$). 
+    Notably, we found that the optimal learning rate for UCB ($\approx 3 \times 10^{-3}$) was significantly higher than that required for $\epsilon$-greedy ($\approx 5 \times 10^{-5}$). 
+    This suggests that UCB's directed exploration leads to more stable updates, allowing the agent to learn more aggressively without diverging.
+
 \subsubsection{(f)}
-
+For the final submission, we selected the policy trained using the UCB exploration strategy described in Section \ref{sec:problem2e3}. 
+This model was chosen because it demonstrated superior stability and convergence speed compared to the standard $\epsilon$-greedy approach, while successfully satisfying the performance criterion (average reward $\geq -135$).
 \end{document}

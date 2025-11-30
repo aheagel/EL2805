@@ -135,5 +135,5 @@ if __name__ == "__main__":
     plt.show()
     env.close()
 
-    pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
-    exec(open(os.path.join(sys.path[0], 'check_solution.py')).read())
+    #pickle.dump({"W": W_learned.T, "N": eta.T}, open(sys.path[0] + '/weights.pkl', 'wb')) # used to save
+    #exec(open(os.path.join(sys.path[0], 'check_solution.py')).read())
