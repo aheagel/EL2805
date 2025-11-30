@@ -40,7 +40,7 @@ KTH Royal Institute of Technology\\
 Course: EL2805 - Reinforcement Learning \\
 \begin{align*}
     \text{Saga Tran} &\mid 19991105-2182 \\
-\text{Anh Do} &\mid 20020416-2317
+    \text{Anh Do} &\mid 20020416-2317
 \end{align*}
 
 \vspace{200pt}
@@ -487,14 +487,68 @@ Date: 2025/12/05 18.00 \\
     
             We iterated for 1,000,000 episodes to ensure convergence across all configurations. To remain in line with the problem formulation, we have also marked the 50,000-episode threshold for reference.
        
-        \subsubsection{(k) BOUNS}
-            
+            \subsubsection{(k) Bonus}
+            \begin{figure}[H]
+                \centering
+                \begin{subfigure}[b]{0.6\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1kOnes.png}
+                    \caption{Q-learning and SARSA learning plot (initialized with ones)}
+                    \label{fig:problem1kOnes}
+                \end{subfigure}
+                \hfill
+                \begin{subfigure}[b]{0.8\textwidth}
+                    \centering
+                    \includegraphics[width=\textwidth]{figures/1kOnesSurv.png}
+                    \caption{100,000 trial simulation of Q-learning and SARSA from Figure \ref{fig:problem1kOnes}}
+                    \label{fig:problem1kOnesSurv}  
+                \end{subfigure}
+                \caption{Performance of Q-learning ($\alpha=0.501$, $\epsilon=0.2$) and SARSA ($\alpha=0.501$, $\delta=1$) initialized with ones.}
+                \label{fig:problem1k}        
+            \end{figure}
+
+            We can clearly see from Figure \ref{fig:problem1k} that the probabilities of survival for Q-learning and SARSA converge in this environment to the Q-value of the initial state.
+            This is due to the reward structure defined in \ref{RewardFunctionBasic}.
+
+            We also observe that both Q-learning and SARSA attempt to converge to the theoretical optimal survival probability, with Q-learning slightly outperforming SARSA. 
+            This is expected because Q-learning is an off-policy method that learns the optimal policy directly. 
+            In contrast, SARSA is on-policy and learns the value of the policy being followed, which may include suboptimal exploratory actions, from the non zero $\epsilon$.
     \clearpage
     \newpage
 \section{Problem 2}
 \subsubsection{(a)}
 \subsubsection{(b)}
+
 \subsubsection{(c)}
+The agent was trained for 200 episodes using the SARSA($\lambda$) algorithm. 
+Due to the continuous nature of the Mountain Car state space (position and velocity), tabular methods are infeasible.
+We therefore employed Linear Function Approximation, approximating the value function as $Q(s, a) \approx \mathbf{w}^\top \phi(s)$.
+
+    \myparagraph{Feature Engineering}
+    We utilized an order-2 Fourier Basis ($p=2$) to construct the feature vector $\phi(s)$. 
+    This method maps the 2-dimensional state vector into a higher-dimensional feature space using cosine functions. 
+    With order $p=2$, we generate coefficients for all combinations of frequencies $f\in\{0, 1, 2\}$ for both state dimensions, resulting in $(p+1)^2 = 9$ distinct features per action. 
+    For example, a feature $\phi_i(s): \mathcal{R}^2 \to [-1, 1]^9$ is calculated as $\cos(\pi \cdot \mathbf{c}^T \mathbf{s})$, where $\mathbf{c}: f^{2\times9}$ is the coefficient vector and $\mathbf{s}: \mathcal{R}^2$ is the state vector.
+
+    \myparagraph{Optimization and Stability}
+    Standard Stochastic Gradient Descent (SGD) was replaced with Nesterov Momentum. 
+    This modification accelerates convergence by incorporating a "velocity" term, allowing the agent to navigate the optimization landscape with reduced oscillation compared to standard momentum. 
+    To further ensure stability:
+    \begin{enumerate}
+        \item \textbf{Gradient Clipping:} Eligibility traces were clipped to the range $[-5, 5]$ to prevent gradient explosion.
+        \item \textbf{Adaptive Learning Rate:} The learning rate $\alpha$ was scaled inversely by the norm of the Fourier basis coefficients ($||\eta||_2$). This ensures smaller update steps for high-frequency features (which are more sensitive to noise) and larger steps for low-frequency features.
+    \end{enumerate}
+
+    \myparagraph{Hyperparameters}
+    The specific hyperparameters used during training were:
+    \begin{itemize}
+        \item \textbf{Discount factor ($\gamma$):} 1 (Undiscounted task).
+        \item \textbf{Trace decay ($\lambda$):} $\approx 0.854$.
+        \item \textbf{Momentum:} $\approx 0.998$.
+        \item \textbf{Learning Rate ($\alpha$):} Follows a polynomial decay schedule $\alpha_k = \alpha_{init} \cdot (k / \text{scale})^{\text{power}}$. ($\alpha_{init}=6.64E-5$, $\text{scale}=21.5$ and $\text{power}=0.674$). OBS $k\geq1$ is usually the episode number here
+        \item \textbf{Exploration ($\epsilon$):} Follows an exponential decay schedule $\epsilon_k = \epsilon_{init} \cdot \left(\epsilon_{decay}\right)^{k}$. ($\epsilon_{init}=0.002$, $\epsilon_{decay}=0.934$). OBS $k\geq1$ is usually the episode number here.
+    \end{itemize}
+
 \subsubsection{(d)}
 \subsubsection{(e)}
 \subsubsection{(f)}

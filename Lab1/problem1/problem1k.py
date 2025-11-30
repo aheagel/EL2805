@@ -49,7 +49,7 @@ if __name__ == "__main__":
     eppsQ = ("constant", 0.2) #lambda k: 0.2 #k**(-0.4)
 
     alphaS = ("power", 1, 0.501) #lambda n: n**(-0.501)
-    eppsS = ("power", 1, 0.95) #lambda k: k**(-1)
+    eppsS = ("power", 1, 0.99) #lambda k: k**(-1)
 
     # Q-learning
     Q_qlearning, visits_qlearning, V_qlearning = Q_learning_improved(env, start, discount, n_episodes=n_episodes, alpha_func=alphaQ, epsilon_func=eppsQ, Q=Q_start.copy())
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     plt.plot(np.arange(1,n_episodes+1), V_qlearning, label=f'Q learning last Value: {V_qlearning[-1]}' , marker='o', markerfacecolor='none', markeredgecolor='blue', markersize=4, markevery=10000, linewidth=1)
     plt.plot(np.arange(1,n_episodes+1), V_sarsa, label=f'SARSA learning last Value: {V_sarsa[-1]}', marker='x', markersize=4, markevery=10000, linewidth=1)
     plt.axhline(y=V_star[env.map[start]], color='k', linestyle='--', label=f'Optimal Reward Approximation {V_star[env.map[start]]}')
+    plt.axvline(x=50000, color='b', linestyle=':', label='50000 Iterations')
     plt.xlabel('Iterations')
     plt.ylabel('Value at Start State approximations')
     plt.title(r'Convergence of SARSA and Q learning with different $\epsilon$ and $\alpha$')
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.show()
 
-    rept = 1000000
+    rept = 100000
 
     results = Parallel(n_jobs=-1)( # this makes the code run in parallel 4x the speed
         delayed(run_simulation)(env, start, discount, Q_policy, S_policy) 
@@ -94,8 +95,8 @@ if __name__ == "__main__":
     plt.figure(figsize=(14, 7))
 
     # main cumulative averages (thicker for visibility)
-    plt.plot(iterations, cumavg_Q, label=f'Cumulative average (Q-learning) V* = {V_qlearning[-1]:.4f}', color='C0', linewidth=1)
-    plt.plot(iterations, cumavg_S, label=f'Cumulative average (SARSA) V* = {V_sarsa[-1]:.4f}', color='C1', linewidth=1)
+    plt.plot(iterations, cumavg_Q, label=f'Cumulative average (Q-learning) V* = {V_qlearning[-1]}', color='C0', linewidth=1)
+    plt.plot(iterations, cumavg_S, label=f'Cumulative average (SARSA) V* = {V_sarsa[-1]}', color='C1', linewidth=1)
 
     # mark final cumulative-average values and annotate
     final_Q = cumavg_Q[-1]
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     plt.xlim(1, rept)
     plt.ylim(-0.05, 1.05)
     plt.xlabel('Iteration (trial index)')
-    plt.ylabel('Win (0/1) and cumulative average')
+    plt.ylabel('cumulative average of surviving to exit')
     plt.title('Cumulative average — Q-learning vs SARSA')
     plt.legend(loc='upper right', fontsize=9)
     plt.grid(True, linestyle='--', alpha=0.4)

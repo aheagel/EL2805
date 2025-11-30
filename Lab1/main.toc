@@ -30,11 +30,14 @@
 \contentsline {paragraph}{\numberline {1.5.2.1}1)}{12}{}%
 \contentsline {paragraph}{\numberline {1.5.2.2}2)}{13}{}%
 \contentsline {paragraph}{\numberline {1.5.2.3}3)}{14}{}%
-\contentsline {subsubsection}{\numberline {1.5.3}(k) BOUNS}{15}{}%
+\contentsline {subsubsection}{\numberline {1.5.3}(k) Bonus}{15}{}%
 \contentsline {section}{\numberline {2}Problem 2}{16}{}%
 \contentsline {subsubsection}{\numberline {2.0.1}(a)}{16}{}%
 \contentsline {subsubsection}{\numberline {2.0.2}(b)}{16}{}%
 \contentsline {subsubsection}{\numberline {2.0.3}(c)}{16}{}%
-\contentsline {subsubsection}{\numberline {2.0.4}(d)}{16}{}%
-\contentsline {subsubsection}{\numberline {2.0.5}(e)}{16}{}%
-\contentsline {subsubsection}{\numberline {2.0.6}(f)}{16}{}%
+\contentsline {paragraph}{\numberline {2.0.3.1}Feature Engineering}{16}{}%
+\contentsline {paragraph}{\numberline {2.0.3.2}Optimization and Stability}{16}{}%
+\contentsline {paragraph}{\numberline {2.0.3.3}Hyperparameters}{16}{}%
+\contentsline {subsubsection}{\numberline {2.0.4}(d)}{17}{}%
+\contentsline {subsubsection}{\numberline {2.0.5}(e)}{17}{}%
+\contentsline {subsubsection}{\numberline {2.0.6}(f)}{17}{}%
