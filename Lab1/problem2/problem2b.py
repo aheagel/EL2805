@@ -60,7 +60,7 @@ def SARSA2_learning(env, lamda, discount=1, W=None, p=2, eta=None, n_episodes=50
     eta = eta.astype(np.float64)
 
     if W is None:
-        W = np.zeros((eta.shape[1], int(env.action_space.n)))  # Random initialization of weights
+        W = np.zeros((eta.shape[1], int(env.action_space.n)))  # Zeros initialization
     if eps is None:
         eps = lambda k: 0.1  # Default epsilon value
     elif not callable(eps):
@@ -137,6 +137,7 @@ if __name__ == "__main__":
 
     # Train SARSA with Fourier Basis
     W_learned, rewards = SARSA2_learning(env,
+                                         #W=np.random.randn(eta.shape[1], int(env.action_space.n)) * -140,
                                          lamda=params['lambda'],
                                          discount=1,
                                          p=p,

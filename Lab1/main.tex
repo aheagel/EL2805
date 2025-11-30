@@ -485,7 +485,8 @@ Date: 2025/12/05 18.00 \\
             regarding parameter tuning, maintaining $\alpha > \delta$ is not necessarily beneficial when convergence is smooth, as a faster decaying $\epsilon$ encourages the model to exploit the optimal policy sooner. 
             However, for random initialization (Figure \ref{fig:problem1j3Rand}), a higher learning rate proves superior, as it allows for significant updates later in training, helping the agent escape local optima caused by insufficient early exploration.
     
-            We iterated for 1,000,000 episodes to ensure convergence across all configurations. To remain in line with the problem formulation, we have also marked the 50,000-episode threshold for reference.
+            We iterated for 1,000,000 episodes to ensure convergence across all configurations. 
+            To remain in line with the problem formulation, we have also marked the 50,000-episode threshold for reference.
        
             \subsubsection{(k) Bonus}
             \begin{figure}[H]
@@ -517,39 +518,198 @@ Date: 2025/12/05 18.00 \\
     \newpage
 \section{Problem 2}
 \subsubsection{(a)}
+
 \subsubsection{(b)}
+
+
 
 \subsubsection{(c)}
 The agent was trained for 200 episodes using the SARSA($\lambda$) algorithm. 
-Due to the continuous nature of the Mountain Car state space (position and velocity), tabular methods are infeasible.
+Due to the continuous nature of the Mountain Car state space (position and velocity), tabular methods are infeasible. 
 We therefore employed Linear Function Approximation, approximating the value function as $Q(s, a) \approx \mathbf{w}^\top \phi(s)$.
 
-    \myparagraph{Feature Engineering}
-    We utilized an order-2 Fourier Basis ($p=2$) to construct the feature vector $\phi(s)$. 
-    This method maps the 2-dimensional state vector into a higher-dimensional feature space using cosine functions. 
-    With order $p=2$, we generate coefficients for all combinations of frequencies $f\in\{0, 1, 2\}$ for both state dimensions, resulting in $(p+1)^2 = 9$ distinct features per action. 
-    For example, a feature $\phi_i(s): \mathcal{R}^2 \to [-1, 1]^9$ is calculated as $\cos(\pi \cdot \mathbf{c}^T \mathbf{s})$, where $\mathbf{c}: f^{2\times9}$ is the coefficient vector and $\mathbf{s}: \mathcal{R}^2$ is the state vector.
+\myparagraph{Feature Engineering}
+We utilized an order-2 Fourier Basis ($p=2$) to construct the feature vector $\phi(s)$. 
+This method maps the 2-dimensional state vector into a higher-dimensional feature space using cosine functions. 
+With order $p=2$, we generate coefficients for all combinations of frequencies $f \in \{0, 1, 2\}$ for both state dimensions, resulting in $(p+1)^2 = 9$ distinct features per action. 
+Specifically, a feature $\phi_i(s)$ corresponds to a coefficient vector $\mathbf{c}_i \in \{0, 1, 2\}^2$ and is calculated as $\phi_i(s) = \cos(\pi \cdot \mathbf{c}_i^\top \mathbf{s})$.
 
-    \myparagraph{Optimization and Stability}
-    Standard Stochastic Gradient Descent (SGD) was replaced with Nesterov Momentum. 
-    This modification accelerates convergence by incorporating a "velocity" term, allowing the agent to navigate the optimization landscape with reduced oscillation compared to standard momentum. 
-    To further ensure stability:
-    \begin{enumerate}
-        \item \textbf{Gradient Clipping:} Eligibility traces were clipped to the range $[-5, 5]$ to prevent gradient explosion.
-        \item \textbf{Adaptive Learning Rate:} The learning rate $\alpha$ was scaled inversely by the norm of the Fourier basis coefficients ($||\eta||_2$). This ensures smaller update steps for high-frequency features (which are more sensitive to noise) and larger steps for low-frequency features.
-    \end{enumerate}
+\myparagraph{Optimization and Stability}
+Standard Stochastic Gradient Descent (SGD) was replaced with Nesterov Momentum. 
+This modification accelerates convergence by incorporating a "velocity" term, allowing the agent to navigate the optimization landscape with reduced oscillation. 
+To further ensure stability, we implemented:
 
-    \myparagraph{Hyperparameters}
-    The specific hyperparameters used during training were:
-    \begin{itemize}
-        \item \textbf{Discount factor ($\gamma$):} 1 (Undiscounted task).
-        \item \textbf{Trace decay ($\lambda$):} $\approx 0.854$.
-        \item \textbf{Momentum:} $\approx 0.998$.
-        \item \textbf{Learning Rate ($\alpha$):} Follows a polynomial decay schedule $\alpha_k = \alpha_{init} \cdot (k / \text{scale})^{\text{power}}$. ($\alpha_{init}=6.64E-5$, $\text{scale}=21.5$ and $\text{power}=0.674$). OBS $k\geq1$ is usually the episode number here
-        \item \textbf{Exploration ($\epsilon$):} Follows an exponential decay schedule $\epsilon_k = \epsilon_{init} \cdot \left(\epsilon_{decay}\right)^{k}$. ($\epsilon_{init}=0.002$, $\epsilon_{decay}=0.934$). OBS $k\geq1$ is usually the episode number here.
-    \end{itemize}
+\begin{enumerate}
+    \item \textbf{Gradient Clipping:} Eligibility traces were clipped to the range $[-5, 5]$ to prevent gradient explosion.
+    \item \textbf{Adaptive Learning Rate:} The learning rate for each feature was scaled inversely by the norm of its Fourier basis coefficients ($1/||\eta||_2$). 
+    This ensures smaller update steps for high-frequency features (which are sensitive to noise) and larger steps for low-frequency features.
+\end{enumerate}
+
+\myparagraph{Hyperparameters}
+The specific hyperparameters used during training were:
+\begin{itemize}
+    \item \textbf{Discount factor ($\gamma$):} 1 (Undiscounted task).
+    \item \textbf{Trace decay ($\lambda$):} $\approx 0.854$.
+    \item \textbf{Momentum:} $\approx 0.998$.
+    \item \textbf{Learning Rate ($\alpha$):} Follows a polynomial decay schedule: 
+    $$ \alpha_k = \frac{\alpha_{init}}{(k / \text{scale})^{\text{power}}}, \quad k\geq1 $$
+    where $\alpha_{init} \approx 6.64 \times 10^{-5}$, $\text{scale} \approx 21.5$, and $\text{power} \approx 0.674$. OBS $k$ is the episodes count.
+    \item \textbf{Exploration ($\epsilon$):} Follows an exponential decay schedule:
+    $$ \epsilon_k = \epsilon_{init} \cdot (\epsilon_{decay})^{k}, \quad k\geq1$$
+    where $\epsilon_{init} \approx 0.002$ and $\epsilon_{decay} \approx 0.934$. OBS $k$ is the episodes count.
+\end{itemize}
 
 \subsubsection{(d)}
+\begin{figure}[H]
+    \centering
+    % Top: Learning Curve
+    \begin{subfigure}[b]{0.8\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2b.png}
+        \caption{SARSA($\lambda$) learning curve (Full Basis including [0,0])}
+        \label{fig:problem2dLearning}
+    \end{subfigure}
+    
+    \vspace{0.5cm}
+    
+    % Bottom: 3D Plots
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2d3Dvalue.png}
+        \caption{Approximated Value Function $V(s)$}
+        \label{fig:problem2dValue}  
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2d3DPol.png}
+        \caption{Learned Policy $\pi(s)$}
+        \label{fig:problem2dPolicy}  
+    \end{subfigure}
+    \caption{Analysis of the agent trained with the full Fourier Basis ($p=2$).}
+    \label{fig:problem2d}        
+\end{figure}
+
+Figure \ref{fig:problem2dLearning} illustrates the learning curve over 200 episodes. 
+The agent demonstrates a consistent increase in total reward (decrease in steps), indicating effective convergence. 
+The 3D value function plot (Figure \ref{fig:problem2dValue}) aligns with the expected physics of the environment. 
+The value peaks near the goal state (position $\approx 0.5$, velocity $\approx 0$), reflecting the high expected return of reaching the flag. 
+Conversely, the value is lowest in the valley where the agent has no momentum.
+
+The learned policy (Figure \ref{fig:problem2dPolicy}) exhibits the necessary "swinging" strategy. 
+To reach the goal, the agent does not greedily push right; instead, it pushes left when velocity is negative and right when velocity is positive. 
+This builds the mechanical energy required to overcome gravity and reach the top of the hill.
+
+We investigated the importance of the basis vector $\eta=[0,0]$. 
+As shown in Figure \ref{fig:problem2dBAD}, excluding this term severely hinders performance.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.8\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2dBad.png}
+        \caption{Learning curve excluding $\eta=[0,0]$}
+        \label{fig:problem2dLearningBAD}
+    \end{subfigure}
+    
+    \vspace{0.5cm}
+    
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2d3DValueBad.png}
+        \caption{Value Function $V(s)$ (No Bias)}
+        \label{fig:problem2dValueBAD}  
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/2d3DpolBad.png}
+        \caption{Policy $\pi(s)$ (No Bias)}
+        \label{fig:problem2dPolicyBAD}  
+    \end{subfigure}
+    \caption{Performance analysis when the constant basis feature $\eta=[0,0]$ is excluded.}
+    \label{fig:problem2dBAD}        
+\end{figure}
+
+Without $\eta=[0,0]$, the agent fails to converge effectively (Figure \ref{fig:problem2dLearningBAD}). 
+The mathematical reason is that the feature corresponding to $\eta=[0,0]$ is $\cos(\pi \cdot [0,0]^\top s) = \cos(0) = 1$. 
+This acts as a bias term (or intercept) for the linear approximator, allowing the value function to shift its global mean up or down. 
+Without it, the function $Q(s,a)$ is forced to oscillate around zero (or have a mean determined solely by the higher frequencies), which makes approximating the true value function extremely difficult. 
+Consequently, the value landscape (Figure \ref{fig:problem2dValueBAD}) is distorted, leading to an incoherent policy (Figure \ref{fig:problem2dPolicyBAD}).
+
 \subsubsection{(e)}
+    \myparagraph{1)}
+    \begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/2e1alpha.png}
+            \caption{Impact of learning rate $\alpha$ (with 95\% CI)}
+            \label{fig:problem2eAlpha}  
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{figures/2e1lambda.png}
+            \caption{Impact of eligibility trace $\lambda$ (with 95\% CI)}
+            \label{fig:problem2eLambda}  
+        \end{subfigure}
+        \caption{Sensitivity analysis of the average total reward (last 50 episodes) with respect to learning rate and eligibility trace decay.}
+        \label{fig:problem2e}        
+    \end{figure}
+
+    We can see that the learning rate $\alpha$ has a significant impact on performance (Figure \ref{fig:problem2eAlpha}), with values around $10^{-5}$ yielding the best results. Lower values result in learning that is too slow to solve the task within the episode limit, while excessively high values likely cause instability or divergence in the weight updates.
+
+    Similarly, the eligibility trace parameter $\lambda$ performs better with higher values (Figure \ref{fig:problem2eLambda}). 
+    This is because the Mountain Car environment has sparse rewards (the agent receives a penalty of -1 at every step until the goal). 
+    A higher $\lambda$ increases the decay horizon, allowing the algorithm to propagate the delayed reward signal further back in time to the early actions that helped build the necessary momentum. Conversely, lower $\lambda$ values rely more on bootstrapping (TD), which propagates reward information much slower across the long trajectories required to reach the top.
+
+    \myparagraph{2)}\label{sec:problem2e2}
+    We observed that zero initialization of the weights $\mathbf{w}$ yields the best performance. 
+    This success is attributed to the principle of \textit{Optimistic Initial Values}. 
+
+    In the Mountain Car environment, the reward structure is strictly negative ($r=-1$ per step). 
+    Consequently, the true value function $V^\pi(s)$ is always negative. 
+    By initializing weights to zero, the initial value estimates start at $Q(s,a) \approx 0$, which is strictly greater than the true values. 
+    This "optimism" drives exploration: whenever the agent visits a state and receives a reward of $-1$, the value estimate decreases. 
+    However, unvisited or less-visited state-action pairs remain close to $0$ (higher value), effectively pulling the agent towards exploring new trajectories to find the non-existent "zero reward" path, eventually leading it to the goal.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.6\textwidth]{figures/2e1random.png}
+        \caption{Learning curve using Random Initialization ($\mathbf{w} \sim U[-140, 0]$). All other hyperparameters remain identical to Figure \ref{fig:problem2dLearning}.}
+        \label{fig:problem2e2}
+    \end{figure}
+
+    In contrast, random initialization (Figure \ref{fig:problem2e2}) hinders convergence. 
+    As shown in the plot, initializing with arbitrary negative values (e.g., mimicking the range of expected returns) introduces high variance. 
+    This can result in "pessimistic" estimates where the agent falsely believes certain useful state-actions are worse than they are, or "arbitrary" biases where the agent favors a direction purely due to initialization noise rather than experience. 
+    In the context of Function Approximation with momentum, these erratic initial gradients make it difficult for the optimizer to settle into a stable descent direction, significantly delaying learning.
+
+    \myparagraph{3)}
+    To remedy the initialization sensitivity observed in Section \ref{sec:problem2e2}, we implemented an Upper Confidence Bound (UCB) action selection strategy.
+    This method balances exploration and exploitation by augmenting the action-value estimates ($Q$-values) with an uncertainty bonus proportional to the rarity of the state-action pair \cite{sutton2018reinforcement}.
+
+    Since the Mountain Car state space is continuous, exact visitation counts are impossible.
+    We addressed this by discretizing the state space into a grid of $20 \times 20$ bins for position and velocity, respectively.
+    As our implementation normalizes the state variables to the range $[0, 1]$, the bin indices $(i, j)$ for a given state $s=(s_1, s_2)$ are computed as:
+    $$ i = \lfloor 20 \cdot s_1 \rfloor, \quad j = \lfloor 20 \cdot s_2 \rfloor $$
+
+    We maintain a visitation count table $N(i, j, a)$ which tracks how many times action $a$ has been taken in bin $(i, j)$.
+    The policy then selects the action $a$ that maximizes the combined value:
+    $$ a = \operatorname*{argmax}_{\alpha \in \mathcal{A}} \left( Q(s_t, \alpha) + c \sqrt{\frac{\ln\left(\sum_{i,j,a} N(i, j, a)\right)}{N(i, j, \alpha) + \epsilon}} \right) $$
+    
+    where $t$ is the total number of steps taken, and $c$ is the exploration parameter (which we decayed over episodes).
+    The term $\sqrt{\frac{\ln t}{N(i, j, a)}}$ acts as the exploration bonus: it is large for actions rarely visited in the current region (low $N$) and small for well-explored actions, effectively guiding the agent to explore unknown regions of the state space despite the pessimistic value initialization.
+
+    \subsubsection{(f) Submission of Optimal Weights}
+    We have extracted the parameters of the optimal policy derived in Part (b) and saved them to the file \texttt{weights.pkl}.
+    This file contains a dictionary object with the following keys, in accordance with the assignment instructions:
+    \begin{itemize}
+        \item \textbf{'W'}: The learned weight matrix of dimensions $K \times M$ for the Q-function.
+        \item \textbf{'N'}: The matrix containing the Fourier basis coefficients ($\eta_i$).
+    \end{itemize}
+    This file allows for the verification of our policy's performance using the provided \texttt{check\_solution.py} script.
 \subsubsection{(f)}
+
 \end{document}

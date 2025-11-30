@@ -33,10 +33,12 @@ X, Y = np.meshgrid(x, y)
 X_s, Y_s = np.meshgrid(x_scaled[:,0], y_scaled[:,1])
 
 grid_pairs = np.stack([X_s, Y_s], axis=-1).reshape(-1, 2)
-
+state = grid_pairs.T.astype(np.float64)
+w = w.astype(np.float64)
+eta = eta.astype(np.float64)
 
 # Plot 2 3D Value function surface plot
-z = Value(grid_pairs.T, w, eta)
+z = Value(state, w, eta)
 
 Z = np.max(z, axis=0).reshape(X.shape)
 
@@ -54,7 +56,7 @@ plt.show()
 
 # Plot 3  3D Optimal Policy action plot
 
-z = Value(grid_pairs.T, w, eta)
+z = Value(state, w, eta)
 
 Z = np.argmax(z, axis=0).reshape(X.shape)
 
