@@ -9,8 +9,8 @@ import os
 import gymnasium as gym
 import pickle
 from problem2 import running_average
-from Lab1.problem2.problem_2b import make_exponential_schedule, make_polynomial_schedule
-from Lab1.problem2.problem_2e3 import SARSA3_learning
+from problem_2b import make_exponential_schedule, make_polynomial_schedule
+from problem_2e3 import SARSA3_learning
 
 if __name__ == "__main__":
     # Import and initialize Mountain Car Environment
