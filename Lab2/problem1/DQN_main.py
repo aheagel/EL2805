@@ -159,7 +159,7 @@ if __name__ == '__main__':
         while not (done or truncated):
             action = agent.select_action(state)
             next_state, reward, done, truncated, _ = env.step(action)
-            agent.push_memory(state, action, reward, next_state, done or truncated)
+            agent.push_memory(state, action, reward, next_state, done)
             agent.optimize_model()
             
             state = next_state
