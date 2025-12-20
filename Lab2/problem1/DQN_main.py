@@ -127,7 +127,7 @@ if __name__ == '__main__':
     LR = 1e-3
     BUFFER_CAPACITY = 10000
     BATCH_SIZE = 64
-    TARGET_UPDATE = int (BUFFER_CAPACITY/BATCH_SIZE)
+    TARGET_UPDATE = int(BUFFER_CAPACITY/BATCH_SIZE)
     GAMMA = 0.99
     EPSILON_START = 1.0
     EPSILON_END = 0.05
@@ -166,11 +166,12 @@ if __name__ == '__main__':
             state = next_state
             total_episode_reward += reward
             steps += 1
+            total_steps += 1 
+
+            if total_steps % TARGET_UPDATE == 0:
+                agent.update_target_network()
             
         agent.update_epsilon(k=i, max_k=Z)
-        
-        if total_steps % TARGET_UPDATE == 0:
-            agent.update_target_network()
             
         episode_reward_list.append(total_episode_reward)
         episode_number_of_steps.append(steps)
@@ -180,8 +181,6 @@ if __name__ == '__main__':
             i, total_episode_reward, 
             running_average(episode_reward_list, 50)[-1],
             agent.epsilon))
-        
-        total_steps += steps
 
     # Save the model
     torch.save(agent.policy_net, 'Lab2/problem1/neural-network-1.pth')
