@@ -145,8 +145,9 @@ if __name__ == '__main__':
 
     EPISODES = trange(1,N_EPISODES+1, desc='Episode: ', leave=True)
     env = gym.make('LunarLander-v3')
-    steps = 0
+    total_steps = 0
     for i in EPISODES:
+        steps = 0
         if i == N_EPISODES:
             env.close()
             env = gym.make('LunarLander-v3', render_mode='human') # PLOTTING
@@ -168,7 +169,7 @@ if __name__ == '__main__':
             
         agent.update_epsilon(k=i, max_k=Z)
         
-        if steps % TARGET_UPDATE == 0:
+        if total_steps % TARGET_UPDATE == 0:
             agent.update_target_network()
             
         episode_reward_list.append(total_episode_reward)
@@ -179,6 +180,8 @@ if __name__ == '__main__':
             i, total_episode_reward, 
             running_average(episode_reward_list, 50)[-1],
             agent.epsilon))
+        
+        total_steps += steps
 
     # Save the model
     torch.save(agent.policy_net, 'Lab2/problem1/neural-network-1.pth')
