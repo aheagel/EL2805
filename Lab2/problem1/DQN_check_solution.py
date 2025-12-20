@@ -9,8 +9,10 @@ import gymnasium as gym
 import torch
 from tqdm import trange
 import warnings, sys
-warnings.simplefilter(action='ignore', category=FutureWarning)
+from DQN_main import DQN
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
+device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 def running_average(x, N):
     ''' Function used to compute the running average
@@ -25,7 +27,9 @@ def running_average(x, N):
 
 # Load model
 try:
-    model = torch.load('neural-network-1.pth')
+    weights = torch.load('Lab2/problem1/neural-network-1.pth')
+    model = DQN(8, 4).to(device)
+    model.load_state_dict(weights)
     print('Network model: {}'.format(model))
 except:
     print('File neural-network-1.pth not found!')
@@ -58,7 +62,7 @@ for i in EPISODES:
         # Get next state and reward.  The done variable
         # will be True if you reached the goal position,
         # False otherwise
-        q_values = model(torch.tensor(state))
+        q_values = model(torch.tensor(state).to(device))
         _, action = torch.max(q_values, dim=0)
         next_state, reward, done, truncated, _ = env.step(action.item())
 

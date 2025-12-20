@@ -122,9 +122,9 @@ class DQNAgent:
 
 if __name__ == '__main__':
     # Hyperparameters
-    N_EPISODES = 500
-    Z = N_EPISODES * 0.9
-    LR = 1e-3
+    N_EPISODES = 300
+    Z = N_EPISODES * 0.99
+    LR = 1e-4
     BUFFER_CAPACITY = 10000
     BATCH_SIZE = 64
     TARGET_UPDATE = int(BUFFER_CAPACITY/BATCH_SIZE)
@@ -182,8 +182,8 @@ if __name__ == '__main__':
             running_average(episode_reward_list, 50)[-1],
             agent.epsilon))
 
-    # Save the model
-    torch.save(agent.policy_net, 'Lab2/problem1/neural-network-1.pth')
+    # Save the model (full network, not just state_dict)
+    torch.save(agent.policy_net.state_dict(), 'Lab2/problem1/neural-network-1.pth')
     print("Model saved to Lab2/problem1/neural-network-1.pth")
 
     # Plotting
