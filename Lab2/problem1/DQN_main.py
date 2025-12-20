@@ -61,14 +61,14 @@ class DQNAgent:
 
         for i in range(self.buffer_capacity):
             action = np.random.randint(0, self.output_dim)
-            if  not done or not truncated:
+            if not (done or truncated):
                 next_state, reward, done, truncated, _ = self.env.step(action)
                 state = next_state
             else :
                 state = self.env.reset()[0]
                 next_state, reward, done, truncated, _ = self.env.step(action)
 
-            memory[i] = (state, action, reward, next_state, done or truncated)
+            memory[i] = (state, action, reward, next_state, done)
         
         return memory
 
@@ -116,7 +116,6 @@ class DQNAgent:
         loss.backward()
         nn.utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
         self.optimizer.step()
-
 
     def update_target_network(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
