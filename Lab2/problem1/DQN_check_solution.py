@@ -63,6 +63,10 @@ episode_reward_list = []  # Used to store episodes reward
 print('Checking solution...')
 EPISODES = trange(N_EPISODES, desc='Episode: ', leave=True)
 for i in EPISODES:
+    if i == N_EPISODES-1:
+        env.close()
+        env = gym.make('LunarLander-v3', render_mode = 'human')
+        
     EPISODES.set_description("Episode {}".format(i))
     # Reset enviroment data
     done, truncated = False, False
