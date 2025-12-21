@@ -49,7 +49,7 @@ class RandomAgent(Agent):
         return self.last_action
 
 class DQNAgent(Agent):
-    def __init__(self, env, DQN, learning_rate=1e-3, buffer_capacity=10000, batch_size=64, discount_factor=0.99, epsilon_start=1.0, epsilon_end=0.05):
+    def __init__(self, env, DQN: nn.Module, learning_rate=1e-3, buffer_capacity=10000, batch_size=64, discount_factor=0.99, epsilon_start=1.0, epsilon_end=0.05):
         n_actions = env.action_space.n
         super(DQNAgent, self).__init__(n_actions)
         

@@ -11,6 +11,16 @@ import torch
 from tqdm import trange
 import warnings, sys
 warnings.simplefilter(action='ignore', category=FutureWarning)
+from pathlib import Path
+import sys, os
+from DDPG_main import ActorNN, CriticNN
+
+# Ensure the script directory is on sys.path so local modules (e.g. DQN_main) can be imported
+script_dir = Path(__file__).resolve().parent
+sys.path.insert(0, str(script_dir))
+
+# Make the script directory the current working directory so relative file reads (e.g. neural-network-1.pth) work
+os.chdir(script_dir)
 
 def running_average(x, N):
     ''' Function used to compute the running average
@@ -25,7 +35,9 @@ def running_average(x, N):
 
 # Load model
 try:
-    model = torch.load('neural-network-2-actor.pth')
+    weights_a = torch.load('neural-network-2-actor.pth')
+    model = ActorNN(8, 2).to("cpu")
+    model.load_state_dict(weights_a)
     print('Network model: {}'.format(model))
 except:
     print('File neural-network-2-actor.pth not found!')
@@ -48,6 +60,10 @@ episode_reward_list = []  # Used to store episodes reward
 print('Checking solution...')
 EPISODES = trange(N_EPISODES, desc='Episode: ', leave=True)
 for i in EPISODES:
+    if i == N_EPISODES - 1:
+        env.close()
+        env = gym.make('LunarLanderContinuous-v3', render_mode='human')
+        
     EPISODES.set_description("Episode {}".format(i))
     # Reset enviroment data
     done, truncated = False, False
