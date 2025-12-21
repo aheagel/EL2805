@@ -68,6 +68,9 @@ if __name__ == '__main__':
 
     EPISODES = trange(N_episodes, desc='Episode: ', leave=True)
     total_steps = 0
+    current_best = -float('inf')
+    best_agent = None
+
     for i in EPISODES:
         agent.reset_noise()
         if i == N_episodes - 1:
@@ -101,18 +104,23 @@ if __name__ == '__main__':
         episode_reward_list.append(total_episode_reward)
         episode_number_of_steps.append(steps)
         
+        current_average = running_average(episode_reward_list, n_ep_running_average)[-1] 
         # Updates the tqdm update bar with fresh information
         EPISODES.set_description(
             "Episode: {} | Steps: {} | Reward: {:.1f} | Avg. Reward: {:.1f}".format(
             i, 
             steps,
             total_episode_reward, 
-            running_average(episode_reward_list, n_ep_running_average)[-1])
+            current_average)
         )
 
-    torch.save(agent.action_net.state_dict(), 'Lab2/problem2/neural-network-2-actor.pth')
+        if current_average > current_best:
+            current_best = current_average
+            best_agent = agent
+
+    torch.save(best_agent.action_net.state_dict(), 'Lab2/problem2/neural-network-2-actor.pth')
     print("Model saved to neural-network-2-actor.pth")
-    torch.save(agent.critic_net.state_dict(), 'Lab2/problem2/neural-network-2-critic.pth')
+    torch.save(best_agent.critic_net.state_dict(), 'Lab2/problem2/neural-network-2-critic.pth')
     print("Model saved to neural-network-2-critic.pth")
 
     env.close()
