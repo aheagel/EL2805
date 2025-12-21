@@ -31,7 +31,7 @@ class DQNAgent:
         self.output_dim = self.env.action_space.n
         
         # Device selection
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+        self.device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
         self.policy_net = DQN(self.input_dim, self.output_dim).to(self.device)
@@ -122,8 +122,8 @@ class DQNAgent:
 
 if __name__ == '__main__':
     # Hyperparameters
-    N_EPISODES = 300
-    Z = N_EPISODES * 0.99
+    N_EPISODES = 400
+    Z = N_EPISODES * 0.90
     LR = 1e-4
     BUFFER_CAPACITY = 10000
     BATCH_SIZE = 64

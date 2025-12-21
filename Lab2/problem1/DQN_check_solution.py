@@ -10,9 +10,19 @@ import torch
 from tqdm import trange
 import warnings, sys
 from DQN_main import DQN
+import os
+from pathlib import Path
+import sys, os
+
+# Ensure the script directory is on sys.path so local modules (e.g. DQN_main) can be imported
+script_dir = Path(__file__).resolve().parent
+sys.path.insert(0, str(script_dir))
+
+# Make the script directory the current working directory so relative file reads (e.g. neural-network-1.pth) work
+os.chdir(script_dir)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 
 def running_average(x, N):
     ''' Function used to compute the running average
@@ -27,7 +37,7 @@ def running_average(x, N):
 
 # Load model
 try:
-    weights = torch.load('Lab2/problem1/neural-network-1.pth')
+    weights = torch.load('neural-network-1.pth')
     model = DQN(8, 4).to(device)
     model.load_state_dict(weights)
     print('Network model: {}'.format(model))
