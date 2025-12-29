@@ -88,7 +88,7 @@ if __name__ == '__main__':
             agent.epsilon)
         )
 
-    torch.save(agent.policy_net.state_dict(), 'Lab2/problem1/neural-network-1.pth')
+    #torch.save(agent.policy_net.state_dict(), 'Lab2/problem1/neural-network-1.pth')
     print("Model saved to neural-network-1.pth")
 
     env.close()
