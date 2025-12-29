@@ -48,7 +48,7 @@ if __name__ == '__main__':
                      epsilon_end=epsilon_end)
 
     EPISODES = trange(N_episodes, desc='Episode: ', leave=True)
-
+    global_step = 0
     for i in EPISODES:
         if i == N_episodes - 1:
             env.close()
@@ -69,8 +69,9 @@ if __name__ == '__main__':
             state = next_state
             total_episode_reward += reward
             steps += 1
+            global_step += 1
 
-            if (i * N_episodes + steps) % target_update_freq == 0: 
+            if global_step % target_update_freq == 0: 
                  agent.update_target_network()
             
         agent.update_epsilon(k=i, max_k=epsilon_decay_steps)
