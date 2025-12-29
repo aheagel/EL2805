@@ -33,8 +33,8 @@ if __name__ == "__main__":
     env.reset()
 
     # Parameters
-    N_episodes =                              # Number of episodes
-    discount_factor = 0.95                       # Value of the discount factor
+    N_episodes = 400                           # Number of episodes
+    discount_factor = 0.99                       # Value of the discount factor
     n_ep_running_average = 50                    # Running average of 50 episodes
     n_actions = env.action_space.n               # Number of available actions
     dim_state = len(env.observation_space.high)  # State dimensionality
