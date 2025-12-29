@@ -1,4 +1,5 @@
 import gymnasium as gym
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v3')
 
     N_episodes = 400
-    discount_factor = 0.99
+    discount_factor = 0.01
     learning_rate = 1e-4
     buffer_capacity = 10000
     batch_size = 64
